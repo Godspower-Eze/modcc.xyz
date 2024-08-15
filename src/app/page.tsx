@@ -1,20 +1,20 @@
-import Image from 'next/image'
+import { Navbar } from './components/navbar'
 
 export default function Home() {
   return (
-    <main className="container mx-auto px-4 h-lvh font-mono">
-      <div className="mb-10 mt-10 pt-6 pb-6 pl-1">
-        <p>MODCC - Modern Cryptography Calculator</p>
-      </div>
-      <div>
+    <main className="h-lvh font-mono">
+      <Navbar />
+      <div className="container mx-auto text-sm">
         <ul className="list-disc list-outside space-y-5">
           <li>
-            <a href="/lagrange_interpolation">
-              <p>Lagrange Interpolation Over Finite Field</p>
+            <a className="hover:text-blue-400" href="/lagrange_interpolation">
+              <p>Univariate Lagrange Interpolation Over Finite Field</p>
             </a>
           </li>
           <li>
-            <p>Lagrange Interpolation Over Finite Field</p>
+            <a className="hover:text-blue-400">
+              <p>Multivariate Lagrange Interpolation Over Finite Field</p>
+            </a>
           </li>
         </ul>
       </div>
