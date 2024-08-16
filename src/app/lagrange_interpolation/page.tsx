@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ChangeEvent, FormEvent, useState } from 'react'
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import axios from 'axios'
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next'
@@ -8,47 +8,116 @@ import Latex from 'react-latex-next'
 import { Navbar } from '../components/navbar'
 import { BACKEND_URL } from '../constants'
 import { arrayToLatexPoly } from '../utils/latex'
+import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 export default function Home() {
-  const [yValues, setYValues] = useState<Array<number>>([])
-  const [xValues, setXValues] = useState<Array<number>>([])
-  const [modulus, setModulus] = useState<number>(0)
-  const [answer, setAnswer] = useState<string>('')
+  const yValuesPlaceHolder = '3, 2, 5, 7, 9'
+  const xValuesPlaceHolder = '0, 1, 2, 3, 4'
+  const modulusPlaceHolder = '17'
+  const defaultAnswer = '$29x^3 + 19x^2 + 16x + 3$'
+
+  const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
+  const [yValuesError, setYValuesError] = useState<string>('')
+  const [yValuesIsValid, setYValuesIsValid] = useState<boolean>(true)
+
+  const [xValues, setXValues] = useState<string>(xValuesPlaceHolder)
+  const [xValuesError, setXValuesError] = useState<string>('')
+  const [xValuesIsValid, setXValuesIsValid] = useState<boolean>(true)
+
+  const [modulus, setModulus] = useState<string>(modulusPlaceHolder)
+  const [modulusError, setModulusError] = useState<string>('')
+  const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
+
+  const [xValuesAndYValuesIsValid, setXValuesAndYValuesIsValid] = useState<
+    boolean
+  >(true)
+
+  const [answer, setAnswer] = useState<string>(defaultAnswer)
+  const [input, setInput] = useState<string>(
+    '[(0, 3), (1, 2), (5, 3), (3, 7), (4, 9)]',
+  )
+  const [formValid, setFormValid] = useState<boolean>(true)
+  const [isSubmitting, setisSubmitting] = useState<boolean>(false)
+
+  const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
+  const numberRegex = /^\s*[1-9]\d*\s*$/
 
   const handleYValuesChange = (
     e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<Array<number>>>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
-    console.log(e)
+    setter(e.target.value)
+    setYValuesError('')
+    setYValuesIsValid(true)
+    setFormValid(xValuesIsValid && modulusIsValid && true)
+    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
+      setYValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
+      setYValuesIsValid(false)
+      setFormValid(false)
+      return
+    }
   }
 
   const handleXValuesChange = (
     e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<Array<number>>>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
-    console.log(e)
+    setter(e.target.value)
+    setXValuesError('')
+    setXValuesIsValid(true)
+    setFormValid(yValuesIsValid && modulusIsValid && true)
+    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
+      setXValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
+      setXValuesIsValid(false)
+      setFormValid(false)
+      return
+    }
   }
 
   const handleModulusChange = (
     e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<number>>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
-    console.log(e)
+    setter(e.target.value)
+    setModulusError('')
+    setModulusIsValid(true)
+    setFormValid(xValuesIsValid && yValuesIsValid && true)
+    console.log(xValuesIsValid && yValuesIsValid && true)
+    if (!numberRegex.test(e.target.value)) {
+      setModulusError('invalid format. enter a number')
+      setModulusIsValid(false)
+      setFormValid(false)
+      return
+    }
+    if (!isPrime(parseInt(e.target.value.trim()))) {
+      setModulusError('invalid number. enter a prime number')
+      setModulusIsValid(false)
+      setFormValid(false)
+      return
+    }
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    let xValues = [0, 1, 2, 3]
-    let yValues = [3, 1, 2, 4]
-    let modulus = 11
+    if (
+      xValues == xValuesPlaceHolder &&
+      yValues == yValuesPlaceHolder &&
+      modulus == modulusPlaceHolder
+    ) {
+      setAnswer(defaultAnswer)
+      return
+    }
+    let xValuesAsList = commaSeparatedToList(xValues)
+    let yValuesAsList = commaSeparatedToList(yValues)
+    let modulusAsNumber = parseInt(modulus.trim())
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
       const response = await axoisInstance.post('/lf/', {
-        x_values: xValues,
-        y_values: yValues,
-        field: modulus,
+        x_values: xValuesAsList,
+        y_values: yValuesAsList,
+        field: modulusAsNumber,
       })
       let answer = arrayToLatexPoly(response.data)
       setAnswer(answer)
@@ -56,6 +125,17 @@ export default function Home() {
       console.log(error)
     }
   }
+
+  useEffect(() => {
+    if (xValuesIsValid && yValuesIsValid) {
+      setXValuesAndYValuesIsValid(true)
+      let xValuesAsList = commaSeparatedToList(xValues)
+      let yValuesAsList = commaSeparatedToList(yValues)
+      if (xValuesAsList.length != yValuesAsList.length) {
+        setXValuesAndYValuesIsValid(false)
+      }
+    }
+  }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
 
   return (
     <main className="h-lvh font-mono">
@@ -73,13 +153,19 @@ export default function Home() {
               Y VALUES
             </label>
             <input
+              required
               type="text"
               id="name"
               name="name"
-              placeholder="[3, 2, 5, 7, 9]"
+              value={yValues}
               onChange={(e) => handleYValuesChange(e, setYValues)}
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className={`mt-1 block w-full px-3 py-2 border ${
+                yValuesError ? 'border-red-500' : 'border-gray-300'
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             />
+            {yValuesError && (
+              <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
+            )}
           </div>
           <div className="mb-4">
             <label
@@ -89,13 +175,19 @@ export default function Home() {
               X VALUES
             </label>
             <input
+              required
               type="text"
               id="name"
               name="name"
-              placeholder="[0, 1, 2, 3, 4]"
+              value={xValues}
               onChange={(e) => handleXValuesChange(e, setXValues)}
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className={`mt-1 block w-full px-3 py-2 border ${
+                xValuesError ? 'border-red-500' : 'border-gray-300'
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             />
+            {xValuesError && (
+              <p className="text-red-500 text-sm mt-2">{xValuesError}</p>
+            )}
           </div>
           <div className="mb-4">
             <label
@@ -108,15 +200,35 @@ export default function Home() {
               type="text"
               id="name"
               name="name"
-              placeholder="17"
+              value={modulus}
               onChange={(e) => handleModulusChange(e, setModulus)}
-              className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className={`mt-1 block px-3 py-2 border ${
+                modulusError ? 'border-red-500' : 'border-gray-300'
+              } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             />
+            {modulusError && (
+              <p className="text-red-500 text-sm mt-2">{modulusError}</p>
+            )}
+          </div>
+          <div className="mb-2">
+            {!xValuesAndYValuesIsValid && (
+              <p className="text-red-500 text-sm mt-2">
+                length of X VALUES and Y VALUES should be equal
+              </p>
+            )}
+          </div>
+          <div className="mb-4">
+            <p>{input}</p>
           </div>
           <div>
             <button
+              disabled={!formValid || isSubmitting}
               type="submit"
-              className="w-full bg-blue-500 text-white font-bold py-3 rounded-lg hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
+                formValid
+                  ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                  : 'bg-gray-400 cursor-not-allowed'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2`}
             >
               Compute
             </button>
