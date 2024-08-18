@@ -8,7 +8,11 @@ import Latex from 'react-latex-next'
 import { Navbar } from '../components/navbar'
 import { BACKEND_URL } from '../constants'
 import { arrayToLatexPoly } from '../utils/latex'
-import { commaSeparatedToList, isPrime } from '../utils/validation'
+import {
+  commaSeparatedToList,
+  isPrime,
+  listsToString,
+} from '../utils/validation'
 
 export default function Home() {
   const yValuesPlaceHolder = '3, 2, 5, 7, 9'
@@ -34,7 +38,7 @@ export default function Home() {
 
   const [answer, setAnswer] = useState<string>(defaultAnswer)
   const [input, setInput] = useState<string>(
-    '[(0, 3), (1, 2), (5, 3), (3, 7), (4, 9)]',
+    '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
   )
   const [formValid, setFormValid] = useState<boolean>(true)
   const [isSubmitting, setisSubmitting] = useState<boolean>(false)
@@ -128,12 +132,6 @@ export default function Home() {
 
   useEffect(() => {
     if (xValuesIsValid && yValuesIsValid) {
-      setXValuesAndYValuesIsValid(true)
-      let xValuesAsList = commaSeparatedToList(xValues)
-      let yValuesAsList = commaSeparatedToList(yValues)
-      if (xValuesAsList.length != yValuesAsList.length) {
-        setXValuesAndYValuesIsValid(false)
-      }
     }
   }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
 
@@ -210,19 +208,22 @@ export default function Home() {
               <p className="text-red-500 text-sm mt-2">{modulusError}</p>
             )}
           </div>
-          <div className="mb-2">
-            {!xValuesAndYValuesIsValid && (
-              <p className="text-red-500 text-sm mt-2">
-                length of X VALUES and Y VALUES should be equal
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <p>{input}</p>
-          </div>
+          {xValuesIsValid && yValuesIsValid ? (
+            <div className="mb-4">
+              {xValuesAndYValuesIsValid ? (
+                <p>{input}</p>
+              ) : (
+                <p className="text-red-500 text-sm mt-2">
+                  length of <b>X VALUES</b> and <b>Y VALUES</b> should be equal
+                </p>
+              )}
+            </div>
+          ) : (
+            ''
+          )}
           <div>
             <button
-              disabled={!formValid || isSubmitting}
+              disabled={!formValid || isSubmitting || !xValuesAndYValuesIsValid}
               type="submit"
               className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
                 formValid

@@ -17,3 +17,21 @@ export const isPrime = (input: number): boolean => {
   }
   return true;
 };
+
+export const listsToString = (x: Array<number>, y: Array<number>): string => {
+  let res = "[";
+  let list_of_tuples: Array<Array<number>> = [];
+  x.forEach((value, index) => {
+    let tuple = [value, y[index]];
+    list_of_tuples.push(tuple);
+  });
+  list_of_tuples.forEach((value, index) => {
+    if (index != list_of_tuples.length - 1) {
+      res += `(${value[0]}, ${value[1]}), `;
+    } else {
+      res += `(${value[0]}, ${value[1]})`;
+    }
+  });
+  res += "]";
+  return res;
+};
