@@ -7,19 +7,39 @@ import Latex from 'react-latex-next'
 
 import { Navbar } from '../components/navbar'
 import { BACKEND_URL } from '../constants'
-import { arrayToLatexPoly } from '../utils/latex'
+import {
+  arrayToLatexPoly,
+  generateStepsForLagrangeInterpolation,
+  Steps,
+} from '../utils/latex'
 import {
   commaSeparatedToList,
   isPrime,
   listsToString,
 } from '../utils/validation'
 
-export default function Home() {
-  const yValuesPlaceHolder = '3, 2, 5, 7, 9'
-  const xValuesPlaceHolder = '0, 1, 2, 3, 4'
-  const modulusPlaceHolder = '17'
-  const defaultAnswer = '$29x^3 + 19x^2 + 16x + 3$'
+const yValuesPlaceHolder = '3, 2, 5, 7, 9'
+const xValuesPlaceHolder = '0, 1, 2, 3, 4'
+const modulusPlaceHolder = '17'
+const defaultAnswer = '$13x^4 + 9x^3 + 3x^2 + 8x + 3$'
 
+/// Latex Values
+const polynomialForm = ''
+const lagrangeBasisFormala =
+  '$L_i = \\prod_{j=0, j \\neq i}^{n - 1}(\\dfrac{x-x_j}{x_i-x_j})$'
+
+let defaultSteps: Array<Steps> = [
+  {
+    step_1:
+      '$$L_0 = (\\dfrac{x - x_1}{x_0 - x_1})(\\dfrac{x - x_2}{x_0 - x_2})(\\dfrac{x - x_3}{x_0 - x_3})(\\dfrac{x - x_4}{x_0 - x_4})$$',
+    step_2:
+      '$$= (\\dfrac{x - 1}{0 - 1})(\\dfrac{x - 2}{0 - 2})(\\dfrac{x - 3}{0 - 3})(\\dfrac{x - 4}{0 - 4})$$',
+    step_3: '$$= 5(x - 1)(x - 2)(x - 3)(x - 4)$$',
+    step_4: '$$5x^4 + 1x^3 + 5x^2 + 5x + 1$$',
+  },
+]
+
+export default function Home() {
   const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
   const [yValuesError, setYValuesError] = useState<string>('')
   const [yValuesIsValid, setYValuesIsValid] = useState<boolean>(true)
@@ -37,6 +57,7 @@ export default function Home() {
   >(true)
 
   const [answer, setAnswer] = useState<string>(defaultAnswer)
+  const [steps, setSteps] = useState<Array<Steps>>(defaultSteps)
   const [input, setInput] = useState<string>(
     '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
   )
@@ -103,14 +124,14 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (
-      xValues == xValuesPlaceHolder &&
-      yValues == yValuesPlaceHolder &&
-      modulus == modulusPlaceHolder
-    ) {
-      setAnswer(defaultAnswer)
-      return
-    }
+    // if (
+    //   xValues == xValuesPlaceHolder &&
+    //   yValues == yValuesPlaceHolder &&
+    //   modulus == modulusPlaceHolder
+    // ) {
+    //   setAnswer(defaultAnswer)
+    //   return
+    // }
     let xValuesAsList = commaSeparatedToList(xValues)
     let yValuesAsList = commaSeparatedToList(yValues)
     let modulusAsNumber = parseInt(modulus.trim())
@@ -123,8 +144,11 @@ export default function Home() {
         y_values: yValuesAsList,
         field: modulusAsNumber,
       })
-      let answer = arrayToLatexPoly(response.data)
-      setAnswer(answer)
+      let answer = arrayToLatexPoly(response.data.coefficients)
+      let steps = generateStepsForLagrangeInterpolation(response.data.steps)
+      setSteps(steps)
+      setAnswer(`$${answer}$`)
+      return
     } catch (error) {
       console.log(error)
     }
@@ -136,7 +160,7 @@ export default function Home() {
   }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
 
   return (
-    <main className="h-lvh font-mono">
+    <main className="font-mono h-full">
       <Navbar />
       <div className="container mx-auto">
         <p className="font-bold underline text-lg mb-5">
@@ -238,6 +262,18 @@ export default function Home() {
         <div className="mb-5">
           <p className="font-bold underline text-base mb-1">Answer</p>
           <Latex>{answer}</Latex>
+        </div>
+        <div className="mb-5">
+          <p className="font-bold underline text-base mb-1">Solution</p>
+          <Latex>{lagrangeBasisFormala}</Latex>
+          {steps.map((value, index) => (
+            <div key={index} className="mt-4">
+              <Latex>{value.step_1}</Latex>
+              <Latex>{value.step_2}</Latex>
+              <Latex>{value.step_3}</Latex>
+              <Latex>{value.step_4}</Latex>
+            </div>
+          ))}
         </div>
       </div>
     </main>
