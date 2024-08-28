@@ -1,3 +1,20 @@
+interface LagrangePolynomialStep {
+  step_1: string;
+  step_2: string;
+  step_3: string;
+  step_4: string;
+}
+
+interface LagrangeFinalFormStep {
+  step_1: string;
+  step_2: string;
+}
+
+export interface LagrangeInterpolationSteps {
+  lagrange_polynomial_steps: Array<LagrangePolynomialStep>;
+  final_form: LagrangeFinalFormStep;
+}
+
 export const arrayToLatexPoly = (coefficients: Array<number>): string => {
   let res = "";
   coefficients.reverse().forEach((value, index) => {
@@ -21,7 +38,7 @@ export const arrayToLatexPoly = (coefficients: Array<number>): string => {
   return `${res}`;
 };
 
-export const generateLatexForLagrangePolynomialStep1 = (
+const generateLatexForLagrangePolynomialStep1 = (
   i: number,
   n: number
 ): string => {
@@ -37,7 +54,7 @@ export const generateLatexForLagrangePolynomialStep1 = (
   return `$$${basis} ${products}$$`;
 };
 
-export const generateLatexForLagrangePolynomialStep2 = (
+const generateLatexForLagrangePolynomialStep2 = (
   current_value: number,
   x_values: Array<number>
 ): string => {
@@ -53,7 +70,7 @@ export const generateLatexForLagrangePolynomialStep2 = (
   return `$$= ${products}$$`;
 };
 
-export const generateLatexForLagrangePolynomialStep3 = (
+const generateLatexForLagrangePolynomialStep3 = (
   current_value: number,
   inverse: number,
   x_values: Array<number>
@@ -70,17 +87,10 @@ export const generateLatexForLagrangePolynomialStep3 = (
   return `$$= ${inverse}${products}$$`;
 };
 
-export interface Steps {
-  step_1: string;
-  step_2: string;
-  step_3: string;
-  step_4: string;
-}
-
-export const generateStepsForLagrangeInterpolation = (steps: any) => {
-  const xValues = steps["x_values"];
-  const yValues = steps["y_values"];
-  const lagrangeBasisAndYValues = steps["lagrange_basis_and_y_values"];
+const genLatexForStepsInLagrangePolynomial = (
+  xValues: Array<number>,
+  lagrangeBasisAndYValues: Array<any>
+): Array<LagrangePolynomialStep> => {
   const n = lagrangeBasisAndYValues.length;
   let res = [];
   for (let index = 0; index < lagrangeBasisAndYValues.length; index++) {
@@ -93,7 +103,7 @@ export const generateStepsForLagrangeInterpolation = (steps: any) => {
     const step3 = generateLatexForLagrangePolynomialStep3(x, inverse, xValues);
     const lagrangeBasis = element["lagrange_basis"];
     const step4 = arrayToLatexPoly(lagrangeBasis);
-    let stepsObj: Steps = {
+    let stepsObj: LagrangePolynomialStep = {
       step_1: step1,
       step_2: step2,
       step_3: step3,
@@ -101,5 +111,58 @@ export const generateStepsForLagrangeInterpolation = (steps: any) => {
     };
     res.push(stepsObj);
   }
+  return res;
+};
+
+const genLatexForFinalPolynomialStep1 = (
+  lagrangeBasisAndYValues: Array<any>
+): string => {
+  let res = "";
+  for (let index = 0; index < lagrangeBasisAndYValues.length; index++) {
+    const element = lagrangeBasisAndYValues[index];
+    const lagrangeBasis = element["lagrange_basis"];
+    const lagrangeBasisLatex = arrayToLatexPoly(lagrangeBasis.reverse());
+    const y = element["y"];
+    if (index == lagrangeBasisAndYValues.length - 1) {
+      const mul = `${y}(${lagrangeBasisLatex})`;
+      res += mul;
+    } else {
+      const mul = `${y}(${lagrangeBasisLatex}) +`;
+      res += mul;
+    }
+  }
+  return `$f(x) = ${res}$`;
+};
+
+const genLatexForFinalPolynomialStep2 = (
+  coefficients: Array<number>
+): string => {
+  const res = arrayToLatexPoly(coefficients);
+  return `$$f(x) = ${res}$$`;
+};
+
+const getlagrangeFinalFormStep = (steps: any): LagrangeFinalFormStep => {
+  const lagrangeBasisAndYValues = steps["lagrange_basis_and_y_values"];
+  const coefficients = steps["resulting_polynomial"];
+  const step1 = genLatexForFinalPolynomialStep1(lagrangeBasisAndYValues);
+  const step2 = genLatexForFinalPolynomialStep2(coefficients);
+  const res = { step_1: step1, step_2: step2 };
+  return res;
+};
+
+export const getLagrangeInterpolationSteps = (
+  steps: any
+): LagrangeInterpolationSteps => {
+  const xValues = steps["x_values"];
+  const lagrangeBasisAndYValues = steps["lagrange_basis_and_y_values"];
+  const lagrangePolynomialSteps = genLatexForStepsInLagrangePolynomial(
+    xValues,
+    lagrangeBasisAndYValues
+  );
+  const finalFormStep = getlagrangeFinalFormStep(steps);
+  const res = {
+    lagrange_polynomial_steps: lagrangePolynomialSteps,
+    final_form: finalFormStep,
+  };
   return res;
 };
