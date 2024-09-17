@@ -181,7 +181,7 @@ export default function Home() {
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post('/lagrange_interpolation/', {
+      const response = await axoisInstance.post('/lf/', {
         x_values: xValuesAsList,
         y_values: yValuesAsList,
         field: modulusAsNumber,
@@ -209,7 +209,7 @@ export default function Home() {
         <section className="w-full md:w-1/2 p-4">
           <div className="container mx-auto">
             <p className="font-bold underline text-lg mb-5">
-              Univariate Lagrange Interpolation Over Finite Field
+              Multilinear Interpolation Over the Boolean Hypercube
             </p>
             <form className="mb-5" onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -232,28 +232,6 @@ export default function Home() {
                 />
                 {yValuesError && (
                   <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="name"
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                >
-                  X VALUES
-                </label>
-                <input
-                  required
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={xValues}
-                  onChange={(e) => handleXValuesChange(e, setXValues)}
-                  className={`mt-1 block w-full px-3 py-2 border ${
-                    xValuesError ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                />
-                {xValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{xValuesError}</p>
                 )}
               </div>
               <div className="mb-4">
