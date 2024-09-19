@@ -7,7 +7,12 @@ import Latex from 'react-latex-next'
 
 import { Navbar } from '../components/navbar'
 import { Footer } from '../components/footer'
-import { BACKEND_URL } from '../constants'
+import {
+  BACKEND_URL,
+  LAGRANGE_BASIS_FORMULA,
+  MULTILINEAR_LAGRANGE_GENERAL_FORM,
+  MULTILINEAR_LAGRANGE_BASIS_FORMULA,
+} from '../constants'
 import {
   arrayToLatexPoly,
   coefficientsToLatexPoly,
@@ -35,9 +40,7 @@ export default function Home() {
 
   const [answer, setAnswer] = useState<string>(defaultAnswer)
   // const [steps, setSteps] = useState<LagrangeInterpolationSteps>(defaultSteps)
-  const [input, setInput] = useState<string>(
-    '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
-  )
+
   const [formValid, setFormValid] = useState<boolean>(true)
   const [isSubmitting, setisSubmitting] = useState<boolean>(false)
 
@@ -104,10 +107,10 @@ export default function Home() {
         },
       )
       let answer = coefficientsToLatexPoly(response.data['coefficients'])
-      // let answer = arrayToLatexPoly(response.data.coefficients)
+      console.log(response.data)
       // let steps = getLagrangeInterpolationSteps(response.data.steps)
       // setSteps(steps)
-      // setAnswer(`$${answer}$`)
+      setAnswer(`$${answer}$`)
       return
     } catch (error) {
       console.log(error)
@@ -191,33 +194,39 @@ export default function Home() {
               <p className="font-bold underline text-base mb-1">Answer</p>
               <Latex>{answer}</Latex>
             </div>
-            {/* <div className="mb-5">
+            <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
                 Step by Step Solution
               </p>
               <p className="font-bold text-base mt-1">General Form</p>
-              <Latex>{lagrangeBasisFormala}</Latex>
-              <Latex>{generalForm}</Latex>
+              <Latex>
+                {MULTILINEAR_LAGRANGE_GENERAL_FORM} where, for any $w = (w_1,
+                ..., w_v)$
+              </Latex>
+              <Latex>{MULTILINEAR_LAGRANGE_BASIS_FORMULA}</Latex>
+              <Latex>
+                {LAGRANGE_BASIS_FORMULA} where $L_0 = (1 - x)$ and $L_1 = x$
+              </Latex>
 
-              <p className="font-bold text-base mt-1">
+              <p className="font-bold text-base mt-3">
                 Finding the Lagrange Polynomials
               </p>
-              {steps.lagrange_polynomial_steps.map((value, index) => (
+              {/* {steps.lagrange_polynomial_steps.map((value, index) => (
                 <div key={index} className="mt-10">
                   <Latex>{value.step_1}</Latex>
                   <Latex>{value.step_2}</Latex>
                   <Latex>{value.step_3}</Latex>
                   <Latex>{value.step_4}</Latex>
                 </div>
-              ))}
-              <p className="font-bold text-base mt-1">
+              ))} */}
+              {/* <p className="font-bold text-base mt-1">
                 Get the final Polynomial
               </p>
               <div className="mt-10">
                 <Latex>{steps.final_form.step_1}</Latex>
                 <Latex>{steps.final_form.step_2}</Latex>
-              </div>
-            </div> */}
+              </div> */}
+            </div>
           </div>
         </section>
         <section className="w-full md:w-1/4 p-4"></section>

@@ -180,12 +180,15 @@ function logBase(value: number, base: number): number {
 }
 
 function generateCombinations(variables: Array<string>) {
-  const results: Array<string> = [];
-
+  const results: Array<Array<string>> = [];
   // Helper function to generate combinations recursively
-  function combine(prefix: any, remaining: any, start: any) {
+  function combine(
+    prefix: Array<string>,
+    remaining: Array<string>,
+    start: number
+  ) {
     // Add the current combination (prefix) to results
-    results.push(prefix.length > 0 ? prefix : []);
+    results.push(prefix);
 
     // Iterate through the remaining variables
     for (let i = start; i < remaining.length; i++) {
@@ -193,7 +196,6 @@ function generateCombinations(variables: Array<string>) {
       combine([...prefix, remaining[i]], remaining, i + 1);
     }
   }
-
   // Start with an empty combination
   combine([], variables, 0);
 
@@ -203,24 +205,25 @@ function generateCombinations(variables: Array<string>) {
 export const coefficientsToLatexPoly = (
   coefficients: Array<[number, number]>
 ) => {
-  console.log(coefficients);
   let length = coefficients.length;
   let num_of_vars = logBase(length, 2);
-  let temp_terms_map: any = {};
-  let main_terms_map: any = {};
   let main_terms = [];
   for (let index = 0; index < num_of_vars; index++) {
     main_terms.push(2 ** index);
   }
 
+  let terms_map: any = {};
+  let reverse_terms_map: any = {};
+
   main_terms.forEach((element, index) => {
-    main_terms_map[`x_${index + 1}`] = element;
-  });
-  main_terms.forEach((element, index) => {
-    temp_terms_map[element] = `x_${index + 1}`;
+    terms_map[element] = `x_${index + 1}`;
   });
 
-  let term_combinations = generateCombinations(Object.values(temp_terms_map));
+  main_terms.forEach((element, index) => {
+    reverse_terms_map[`x_${index + 1}`] = element;
+  });
+
+  let term_combinations = generateCombinations(Object.values(terms_map));
   for (let index = 0; index < term_combinations.length; index++) {
     const term_combination = term_combinations[index];
     if (term_combination.length != 0 && term_combination.length != 1) {
@@ -229,10 +232,33 @@ export const coefficientsToLatexPoly = (
       for (let index = 0; index < term_combination.length; index++) {
         const term = term_combination[index];
         combined_term += term;
-        total += main_terms_map[term];
+        total += reverse_terms_map[term];
       }
-      main_terms_map[combined_term] = total;
+      terms_map[total] = combined_term;
     }
   }
-  console.log(main_terms_map);
+
+  let latexPoly = "";
+  let constant = "";
+  for (let index = 0; index < coefficients.length; index++) {
+    const id_and_coefficient = coefficients[index];
+    let id = id_and_coefficient[0];
+    let coefficient = id_and_coefficient[1];
+    if (coefficient == 0) {
+      continue;
+    }
+    if (id == 0) {
+      constant = `${coefficient}`;
+      continue;
+    }
+    let term;
+    if (coefficient == 1) {
+      term = `${terms_map[id]}`;
+    } else {
+      term = `${coefficient}${terms_map[id]}`;
+    }
+    latexPoly += `${term} + `;
+  }
+  latexPoly += constant;
+  return `$${latexPoly}$`;
 };
