@@ -1,3 +1,7 @@
+////////////////////////////////////////////////////////
+////////////// LAGRANGE INTERPOLATION ////////////////
+////////////////////////////////////////////////////////
+
 interface LagrangePolynomialStep {
   step_1: string;
   step_2: string;
@@ -165,4 +169,70 @@ export const getLagrangeInterpolationSteps = (
     final_form: finalFormStep,
   };
   return res;
+};
+
+////////////////////////////////////////////////////////
+////////////// MULTILINEAR INTERPOLATION ////////////////
+////////////////////////////////////////////////////////
+
+function logBase(value: number, base: number): number {
+  return Math.log(value) / Math.log(base);
+}
+
+function generateCombinations(variables: Array<string>) {
+  const results: Array<string> = [];
+
+  // Helper function to generate combinations recursively
+  function combine(prefix: any, remaining: any, start: any) {
+    // Add the current combination (prefix) to results
+    results.push(prefix.length > 0 ? prefix : []);
+
+    // Iterate through the remaining variables
+    for (let i = start; i < remaining.length; i++) {
+      // Recursively add more variables to the combination
+      combine([...prefix, remaining[i]], remaining, i + 1);
+    }
+  }
+
+  // Start with an empty combination
+  combine([], variables, 0);
+
+  return results;
+}
+
+export const coefficientsToLatexPoly = (
+  coefficients: Array<[number, number]>
+) => {
+  console.log(coefficients);
+  let length = coefficients.length;
+  let num_of_vars = logBase(length, 2);
+  let temp_terms_map: any = {};
+  let main_terms_map: any = {};
+  let main_terms = [];
+  for (let index = 0; index < num_of_vars; index++) {
+    main_terms.push(2 ** index);
+  }
+
+  main_terms.forEach((element, index) => {
+    main_terms_map[`x_${index + 1}`] = element;
+  });
+  main_terms.forEach((element, index) => {
+    temp_terms_map[element] = `x_${index + 1}`;
+  });
+
+  let term_combinations = generateCombinations(Object.values(temp_terms_map));
+  for (let index = 0; index < term_combinations.length; index++) {
+    const term_combination = term_combinations[index];
+    if (term_combination.length != 0 && term_combination.length != 1) {
+      let total = 0;
+      let combined_term = "";
+      for (let index = 0; index < term_combination.length; index++) {
+        const term = term_combination[index];
+        combined_term += term;
+        total += main_terms_map[term];
+      }
+      main_terms_map[combined_term] = total;
+    }
+  }
+  console.log(main_terms_map);
 };

@@ -10,6 +10,7 @@ import { Footer } from '../components/footer'
 import { BACKEND_URL } from '../constants'
 import {
   arrayToLatexPoly,
+  coefficientsToLatexPoly,
   getLagrangeInterpolationSteps,
   LagrangeInterpolationSteps,
 } from '../utils/latex'
@@ -20,86 +21,20 @@ import {
 } from '../utils/validation'
 
 const yValuesPlaceHolder = '3, 2, 5, 7, 9'
-const xValuesPlaceHolder = '0, 1, 2, 3, 4'
 const modulusPlaceHolder = '17'
 const defaultAnswer = '$13x^4 + 9x^3 + 3x^2 + 8x + 3$'
-
-/// Latex Values
-const generalForm = '$$f(x) = y_0L_0 + y_1L_1 + y_2L_2 + ... + y_{n-1}L_{n-1}$$'
-const lagrangeBasisFormala =
-  '$$L_i = \\prod_{j=0, j \\neq i}^{n - 1}(\\dfrac{x-x_j}{x_i-x_j})$$'
-
-let defaultSteps: LagrangeInterpolationSteps = {
-  lagrange_polynomial_steps: [
-    {
-      step_1:
-        '$$L_0 =  (\\dfrac{x - x_1}{x_0 - x_1})(\\dfrac{x - x_2}{x_0 - x_2})(\\dfrac{x - x_3}{x_0 - x_3})(\\dfrac{x - x_4}{x_0 - x_4})$$',
-      step_2:
-        '$$= (\\dfrac{x - 1}{0 - 1})(\\dfrac{x - 2}{0 - 2})(\\dfrac{x - 3}{0 - 3})(\\dfrac{x - 4}{0 - 4})$$',
-      step_3: '$$= 5(x - 1)(x - 2)(x - 3)(x - 4)$$',
-      step_4: '$$L_0 =  5x^4 + 1x^3 + 5x^2 + 5x + 1$$',
-    },
-    {
-      step_1:
-        '$$L_1 =  (\\dfrac{x - x_0}{x_1 - x_0})(\\dfrac{x - x_2}{x_1 - x_2})(\\dfrac{x - x_3}{x_1 - x_3})(\\dfrac{x - x_4}{x_1 - x_4})$$',
-      step_2:
-        '$$= (\\dfrac{x - 0}{1 - 0})(\\dfrac{x - 2}{1 - 2})(\\dfrac{x - 3}{1 - 3})(\\dfrac{x - 4}{1 - 4})$$',
-      step_3: '$$= 14(x - 0)(x - 2)(x - 3)(x - 4)$$',
-      step_4: '$$L_1 =  14x^4 + 10x^3 + 7x^2 + 4x $$',
-    },
-    {
-      step_1:
-        '$$L_2 =  (\\dfrac{x - x_0}{x_2 - x_0})(\\dfrac{x - x_1}{x_2 - x_1})(\\dfrac{x - x_3}{x_2 - x_3})(\\dfrac{x - x_4}{x_2 - x_4})$$',
-      step_2:
-        '$$= (\\dfrac{x - 0}{2 - 0})(\\dfrac{x - 1}{2 - 1})(\\dfrac{x - 3}{2 - 3})(\\dfrac{x - 4}{2 - 4})$$',
-      step_3: '$$= 13(x - 0)(x - 1)(x - 3)(x - 4)$$',
-      step_4: '$$L_2 =  13x^4 + 15x^3 + 9x^2 + 14x $$',
-    },
-
-    {
-      step_1:
-        '$$L_3 =  (\\dfrac{x - x_0}{x_3 - x_0})(\\dfrac{x - x_1}{x_3 - x_1})(\\dfrac{x - x_2}{x_3 - x_2})(\\dfrac{x - x_4}{x_3 - x_4})$$',
-      step_2:
-        '$$= (\\dfrac{x - 0}{3 - 0})(\\dfrac{x - 1}{3 - 1})(\\dfrac{x - 2}{3 - 2})(\\dfrac{x - 4}{3 - 4})$$',
-      step_3: '$$= 14(x - 0)(x - 1)(x - 2)(x - 4)$$',
-      step_4: '$$L_3 =  14x^4 + 4x^3 + 9x^2 + 7x $$',
-    },
-
-    {
-      step_1:
-        '$$L_4 =  (\\dfrac{x - x_0}{x_4 - x_0})(\\dfrac{x - x_1}{x_4 - x_1})(\\dfrac{x - x_2}{x_4 - x_2})(\\dfrac{x - x_3}{x_4 - x_3})$$',
-      step_2:
-        '$$= (\\dfrac{x - 0}{4 - 0})(\\dfrac{x - 1}{4 - 1})(\\dfrac{x - 2}{4 - 2})(\\dfrac{x - 3}{4 - 3})$$',
-      step_3: '$$= 5(x - 0)(x - 1)(x - 2)(x - 3)$$',
-      step_4: '$$L_4 =  5x^4 + 4x^3 + 4x^2 + 4x $$',
-    },
-  ],
-  final_form: {
-    step_1:
-      '$f(x) = 3( 5x^4 + 1x^3 + 5x^2 + 5x + 1) +2( 14x^4 + 10x^3 + 7x^2 + 4x ) +5( 13x^4 + 15x^3 + 9x^2 + 14x ) +7( 14x^4 + 4x^3 + 9x^2 + 7x ) +9( 5x^4 + 4x^3 + 4x^2 + 4x )$',
-    step_2: '$$f(x) =  13x^4 + 9x^3 + 3x^2 + 8x + 3$$',
-  },
-}
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
   const [yValuesError, setYValuesError] = useState<string>('')
   const [yValuesIsValid, setYValuesIsValid] = useState<boolean>(true)
 
-  const [xValues, setXValues] = useState<string>(xValuesPlaceHolder)
-  const [xValuesError, setXValuesError] = useState<string>('')
-  const [xValuesIsValid, setXValuesIsValid] = useState<boolean>(true)
-
   const [modulus, setModulus] = useState<string>(modulusPlaceHolder)
   const [modulusError, setModulusError] = useState<string>('')
   const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
 
-  const [xValuesAndYValuesIsValid, setXValuesAndYValuesIsValid] = useState<
-    boolean
-  >(true)
-
   const [answer, setAnswer] = useState<string>(defaultAnswer)
-  const [steps, setSteps] = useState<LagrangeInterpolationSteps>(defaultSteps)
+  // const [steps, setSteps] = useState<LagrangeInterpolationSteps>(defaultSteps)
   const [input, setInput] = useState<string>(
     '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
   )
@@ -116,26 +51,10 @@ export default function Home() {
     setter(e.target.value)
     setYValuesError('')
     setYValuesIsValid(true)
-    setFormValid(xValuesIsValid && modulusIsValid && true)
+    setFormValid(modulusIsValid && true)
     if (!commaSeperatedNumbersRegex.test(e.target.value)) {
       setYValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
       setYValuesIsValid(false)
-      setFormValid(false)
-      return
-    }
-  }
-
-  const handleXValuesChange = (
-    e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>,
-  ) => {
-    setter(e.target.value)
-    setXValuesError('')
-    setXValuesIsValid(true)
-    setFormValid(yValuesIsValid && modulusIsValid && true)
-    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
-      setXValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
-      setXValuesIsValid(false)
       setFormValid(false)
       return
     }
@@ -148,8 +67,7 @@ export default function Home() {
     setter(e.target.value)
     setModulusError('')
     setModulusIsValid(true)
-    setFormValid(xValuesIsValid && yValuesIsValid && true)
-    console.log(xValuesIsValid && yValuesIsValid && true)
+    setFormValid(yValuesIsValid && true)
     if (!numberRegex.test(e.target.value)) {
       setModulusError('invalid format. enter a number')
       setModulusIsValid(false)
@@ -166,30 +84,30 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (
-      xValues == xValuesPlaceHolder &&
-      yValues == yValuesPlaceHolder &&
-      modulus == modulusPlaceHolder
-    ) {
-      setAnswer(defaultAnswer)
-      return
-    }
-    let xValuesAsList = commaSeparatedToList(xValues)
+    // if (yValues == yValuesPlaceHolder && modulus == modulusPlaceHolder) {
+    //   setAnswer(defaultAnswer)
+    //   return
+    // }
     let yValuesAsList = commaSeparatedToList(yValues)
+    console.log(yValuesAsList)
     let modulusAsNumber = parseInt(modulus.trim())
+    console.log(modulusAsNumber)
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post('/lf/', {
-        x_values: xValuesAsList,
-        y_values: yValuesAsList,
-        field: modulusAsNumber,
-      })
-      let answer = arrayToLatexPoly(response.data.coefficients)
-      let steps = getLagrangeInterpolationSteps(response.data.steps)
-      setSteps(steps)
-      setAnswer(`$${answer}$`)
+      const response = await axoisInstance.post(
+        '/multilinear_interpolation_over_boolean_hypercube/',
+        {
+          y_values: yValuesAsList,
+          field: modulusAsNumber,
+        },
+      )
+      let answer = coefficientsToLatexPoly(response.data['coefficients'])
+      // let answer = arrayToLatexPoly(response.data.coefficients)
+      // let steps = getLagrangeInterpolationSteps(response.data.steps)
+      // setSteps(steps)
+      // setAnswer(`$${answer}$`)
       return
     } catch (error) {
       console.log(error)
@@ -197,9 +115,9 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (xValuesIsValid && yValuesIsValid) {
+    if (yValuesIsValid) {
     }
-  }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
+  }, [yValues, yValuesIsValid])
 
   return (
     <div className=" bg-gray-100 flex flex-col min-h-screen text-xs">
@@ -255,25 +173,9 @@ export default function Home() {
                   <p className="text-red-500 text-sm mt-2">{modulusError}</p>
                 )}
               </div>
-              {xValuesIsValid && yValuesIsValid ? (
-                <div className="mb-4">
-                  {xValuesAndYValuesIsValid ? (
-                    <p>{input}</p>
-                  ) : (
-                    <p className="text-red-500 text-sm mt-2">
-                      length of <b>X VALUES</b> and <b>Y VALUES</b> should be
-                      equal
-                    </p>
-                  )}
-                </div>
-              ) : (
-                ''
-              )}
               <div>
                 <button
-                  disabled={
-                    !formValid || isSubmitting || !xValuesAndYValuesIsValid
-                  }
+                  disabled={!formValid || isSubmitting}
                   type="submit"
                   className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
                     formValid
@@ -289,7 +191,7 @@ export default function Home() {
               <p className="font-bold underline text-base mb-1">Answer</p>
               <Latex>{answer}</Latex>
             </div>
-            <div className="mb-5">
+            {/* <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
                 Step by Step Solution
               </p>
@@ -315,10 +217,9 @@ export default function Home() {
                 <Latex>{steps.final_form.step_1}</Latex>
                 <Latex>{steps.final_form.step_2}</Latex>
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
-
         <section className="w-full md:w-1/4 p-4"></section>
       </main>
       <Footer />
