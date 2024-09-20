@@ -9,7 +9,7 @@ import { Navbar } from '../components/navbar'
 import { Footer } from '../components/footer'
 import {
   BACKEND_URL,
-  DEFAULT_STEPS,
+  UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
   UNIVARIATE_LAGRANGE_GENERAL_FORM,
   LAGRANGE_BASIS_FORMULA,
   Y_VALUES_PLACEHOLDER,
@@ -48,7 +48,9 @@ export default function Home() {
   const [answer, setAnswer] = useState<string>(
     LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   )
-  const [steps, setSteps] = useState<LagrangeInterpolationSteps>(DEFAULT_STEPS)
+  const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
+    UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
+  )
   const [input, setInput] = useState<string>(
     '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
   )
@@ -283,7 +285,11 @@ export default function Home() {
                 Get the final Polynomial
               </p>
               <div className="mt-10">
-                <Latex>{steps.final_form.step_1}</Latex>
+                <div className="overflow-x-auto">
+                  <div className="inline-block whitespace-pre-wrap">
+                    <Latex>{steps.final_form.step_1}</Latex>
+                  </div>
+                </div>
                 <Latex>{steps.final_form.step_2}</Latex>
               </div>
             </div>

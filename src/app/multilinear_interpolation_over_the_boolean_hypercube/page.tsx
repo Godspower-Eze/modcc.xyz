@@ -12,12 +12,15 @@ import {
   LAGRANGE_BASIS_FORMULA,
   MULTILINEAR_LAGRANGE_GENERAL_FORM,
   MULTILINEAR_LAGRANGE_BASIS_FORMULA,
+  MULTILINEAR_LAGRANGE_DEFAULT_STEPS,
 } from '../constants'
 import {
   arrayToLatexPoly,
   coefficientsToLatexPoly,
   getLagrangeInterpolationSteps,
+  getMultilinearLagrangeInterpolationSteps,
   LagrangeInterpolationSteps,
+  MultilinearLagrangeInterpolationSteps,
 } from '../utils/latex'
 import {
   commaSeparatedToList,
@@ -39,7 +42,9 @@ export default function Home() {
   const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
 
   const [answer, setAnswer] = useState<string>(defaultAnswer)
-  // const [steps, setSteps] = useState<LagrangeInterpolationSteps>(defaultSteps)
+  const [steps, setSteps] = useState<MultilinearLagrangeInterpolationSteps>(
+    MULTILINEAR_LAGRANGE_DEFAULT_STEPS,
+  )
 
   const [formValid, setFormValid] = useState<boolean>(true)
   const [isSubmitting, setisSubmitting] = useState<boolean>(false)
@@ -106,10 +111,9 @@ export default function Home() {
           field: modulusAsNumber,
         },
       )
-      let answer = coefficientsToLatexPoly(response.data['coefficients'])
-      console.log(response.data)
-      // let steps = getLagrangeInterpolationSteps(response.data.steps)
-      // setSteps(steps)
+      let answer = coefficientsToLatexPoly(response.data.coefficients)
+      let steps = getMultilinearLagrangeInterpolationSteps(response.data.steps)
+      setSteps(steps)
       setAnswer(`$${answer}$`)
       return
     } catch (error) {
@@ -211,21 +215,23 @@ export default function Home() {
               <p className="font-bold text-base mt-3">
                 Finding the Lagrange Polynomials
               </p>
-              {/* {steps.lagrange_polynomial_steps.map((value, index) => (
-                <div key={index} className="mt-10">
-                  <Latex>{value.step_1}</Latex>
-                  <Latex>{value.step_2}</Latex>
-                  <Latex>{value.step_3}</Latex>
-                  <Latex>{value.step_4}</Latex>
-                </div>
-              ))} */}
-              {/* <p className="font-bold text-base mt-1">
+              {steps.multilinear_lagrange_polynomial_steps.map(
+                (value, index) => (
+                  <div key={index} className="mt-10">
+                    <Latex>{value.step_1.lhs}</Latex>
+                    <Latex>{value.step_1.rhs}</Latex>
+                    <Latex>{value.step_2}</Latex>
+                    <Latex>{value.step_3}</Latex>
+                  </div>
+                ),
+              )}
+              <p className="font-bold text-base mt-1">
                 Get the final Polynomial
               </p>
               <div className="mt-10">
                 <Latex>{steps.final_form.step_1}</Latex>
-                <Latex>{steps.final_form.step_2}</Latex>
-              </div> */}
+                <Latex>${answer}$</Latex>
+              </div>
             </div>
           </div>
         </section>
