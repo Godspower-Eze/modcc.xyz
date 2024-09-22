@@ -32,7 +32,7 @@ export const arrayToLatexPoly = (coefficients: Array<number>): string => {
       let term = ` ${value}x +`;
       res += term;
     } else {
-      let term = ` ${value}x^${coefficients.length - 1 - index} +`;
+      let term = ` ${value}x^{${coefficients.length - 1 - index}} +`;
       res += term;
     }
   });
@@ -46,13 +46,13 @@ const generateLatexForLagrangePolynomialStep1 = (
   i: number,
   n: number
 ): string => {
-  let basis = `L_${i} = `;
+  let basis = `L_{${i}} = `;
   let products = "";
   for (let j = 0; j < n; j++) {
     if (j == i) {
       continue;
     }
-    let x = `(\\dfrac{x - x_${j}}{x_${i} - x_${j}})`;
+    let x = `(\\dfrac{x - x_{${j}}}{x_{${i}} - x_{${j}}})`;
     products += x;
   }
   return `$$${basis} ${products}$$`;
@@ -111,7 +111,7 @@ const genLatexForStepsInLagrangePolynomial = (
       step_1: step1,
       step_2: step2,
       step_3: step3,
-      step_4: `$$L_${index} = ${step4}$$`,
+      step_4: `$$L_{${index}} = ${step4}$$`,
     };
     res.push(stepsObj);
   }
@@ -135,14 +135,14 @@ const genLatexForFinalPolynomialStep1 = (
       res += mul;
     }
   }
-  return `$f(x) = ${res}$`;
+  return `$$f(x) = ${res}$$`;
 };
 
 const genLatexForFinalPolynomialStep2 = (
   coefficients: Array<number>
 ): string => {
   const res = arrayToLatexPoly(coefficients);
-  return `$$f(x) = ${res}$$`;
+  return `$f(x) = ${res}$`;
 };
 
 const getlagrangeFinalFormStep = (steps: any): LagrangeFinalFormStep => {
@@ -176,21 +176,20 @@ export const getLagrangeInterpolationSteps = (
 ////////////////////////////////////////////////////////
 
 interface MultilinearLagrangePolynomialStep {
-  step_1: {
-    lhs: string;
-    rhs: string;
-  };
+  step_1: string;
   step_2: string;
   step_3: string;
 }
 
 interface MultilinearLagrangeFinalFormStep {
   step_1: string;
+  step_2: string;
 }
 
-export interface MultilinearLagrangeInterpolationSteps {
+export interface MultilinearLagrangeInterpolationStepsAndEvaluations {
   multilinear_lagrange_polynomial_steps: Array<MultilinearLagrangePolynomialStep>;
   final_form: MultilinearLagrangeFinalFormStep;
+  evaluations: Array<string>;
 }
 
 function logBase(value: number, base: number): number {
@@ -220,7 +219,7 @@ function generateCombinations(variables: Array<string>) {
   return results;
 }
 
-export const coefficientsToLatexPoly = (
+const coefficientsToLatexPoly = (
   coefficients: Array<[number, number]>
 ): string => {
   let evaluation_points = coefficients.length;
@@ -234,14 +233,15 @@ export const coefficientsToLatexPoly = (
   let reverse_terms_map: any = {};
 
   main_terms.forEach((element, index) => {
-    terms_map[element] = `x_${index + 1}`;
+    terms_map[element] = `x_{${index + 1}}`;
   });
 
   main_terms.forEach((element, index) => {
-    reverse_terms_map[`x_${index + 1}`] = element;
+    reverse_terms_map[`x_{${index + 1}}`] = element;
   });
 
   let term_combinations = generateCombinations(Object.values(terms_map));
+
   for (let index = 0; index < term_combinations.length; index++) {
     const term_combination = term_combinations[index];
     if (term_combination.length != 0 && term_combination.length != 1) {
@@ -285,6 +285,24 @@ export const coefficientsToLatexPoly = (
   return `${latexPoly}`;
 };
 
+const getVarsString = (numOfVars: number): string => {
+  let vars = [];
+  for (let index = 0; index < numOfVars; index++) {
+    let variable = `x_${index + 1}`;
+    vars.push(variable);
+  }
+  return `f(${vars.join(",")})`;
+};
+
+export const getMultilinearLagrangeInterpolationAnswer = (
+  coefficients: Array<[number, number]>
+) => {
+  let latexPoly = coefficientsToLatexPoly(coefficients);
+  let evaluation_points = coefficients.length;
+  let num_of_vars = logBase(evaluation_points, 2);
+  return `$\\tilde ${getVarsString(num_of_vars)} = ${latexPoly}$`;
+};
+
 const generateLatexForMultilinearLagrangePolynomialStep1 = (
   binary_string: string
 ) => {
@@ -298,11 +316,7 @@ const generateLatexForMultilinearLagrangePolynomialStep1 = (
       rhs += "(L_1)";
     }
   }
-  let step1 = {
-    lhs: `$$${lhs}$$`,
-    rhs: `$$= ${rhs}$$`,
-  };
-  return step1;
+  return `$$${lhs} = ${rhs}$$`;
 };
 
 const generateLatexForMultilinearLagrangePolynomialStep2 = (
@@ -312,9 +326,9 @@ const generateLatexForMultilinearLagrangePolynomialStep2 = (
   for (let i = 0; i < binary_string.length; i++) {
     let variable = binary_string[i];
     if (variable == "0") {
-      res += `(1 - x_${i + 1})`;
+      res += `(1 - x_{${i + 1}})`;
     } else {
-      res += `(x_${i + 1})`;
+      res += `(x_{${i + 1}})`;
     }
   }
   return `$$ = ${res}$$`;
@@ -360,37 +374,57 @@ const genLatexForMultilinearFinalPolynomialStep1 = (
   }
   let evaluation_points = yValues.length;
   let num_of_vars = logBase(evaluation_points, 2);
-  let vars = [];
-  for (let index = 0; index < num_of_vars; index++) {
-    let variable = `x_${index + 1}`;
-    vars.push(variable);
-  }
-  return `$f(${vars.join(",")}) = ${res}$`;
+  return `$\\tilde ${getVarsString(num_of_vars)} = ${res}$`;
 };
 
 const getMultlinearLagrangeFinalFormStep = (
-  steps: any
+  steps: any,
+  coefficients: Array<[number, number]>
 ): MultilinearLagrangeFinalFormStep => {
   const step1 = genLatexForMultilinearFinalPolynomialStep1(
     steps.y_values,
     steps.collection_of_ids_and_coefficients
   );
-  const res: MultilinearLagrangeFinalFormStep = { step_1: step1 };
+  const step2 = getMultilinearLagrangeInterpolationAnswer(coefficients);
+  const res: MultilinearLagrangeFinalFormStep = {
+    step_1: step1,
+    step_2: step2,
+  };
   return res;
 };
 
-export const getMultilinearLagrangeInterpolationSteps = (
-  steps: any
-): MultilinearLagrangeInterpolationSteps => {
+const getEvaluations = (
+  binaryStrings: Array<string>,
+  yValues: Array<number>
+): Array<string> => {
+  let res: Array<string> = [];
+  let evaluation_points = yValues.length;
+  let numOfVars = logBase(evaluation_points, 2);
+  for (let index = 0; index < binaryStrings.length; index++) {
+    const binaryString = binaryStrings[index];
+    const evaluation_string = `$$\\tilde f(${binaryString
+      .split("")
+      .join(",")}) = ${yValues[index]}$$`;
+    res.push(evaluation_string);
+  }
+  return res;
+};
+
+export const getMultilinearLagrangeInterpolationStepsAndEvaluations = (
+  steps: any,
+  coefficients: Array<[number, number]>
+): MultilinearLagrangeInterpolationStepsAndEvaluations => {
   let multilinear_lagrange_polynomial_steps =
     genLatexForStepsInMultilinearLagrangePolynomial(
       steps.binary_strings,
       steps.collection_of_ids_and_coefficients
     );
-  let final_form = getMultlinearLagrangeFinalFormStep(steps);
-  let all_steps: MultilinearLagrangeInterpolationSteps = {
+  let final_form = getMultlinearLagrangeFinalFormStep(steps, coefficients);
+  let evaluations = getEvaluations(steps.binary_strings, steps.y_values);
+  let all_steps: MultilinearLagrangeInterpolationStepsAndEvaluations = {
     multilinear_lagrange_polynomial_steps,
     final_form,
+    evaluations,
   };
   return all_steps;
 };

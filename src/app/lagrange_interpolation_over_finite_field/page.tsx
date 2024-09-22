@@ -22,11 +22,7 @@ import {
   getLagrangeInterpolationSteps,
   LagrangeInterpolationSteps,
 } from '../utils/latex'
-import {
-  commaSeparatedToList,
-  isPrime,
-  listsToString,
-} from '../utils/validation'
+import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(Y_VALUES_PLACEHOLDER)
@@ -50,9 +46,6 @@ export default function Home() {
   )
   const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
     UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  )
-  const [input, setInput] = useState<string>(
-    '[(0, 3), (1, 2), (2, 5), (3, 7), (4, 9)]',
   )
   const [formValid, setFormValid] = useState<boolean>(true)
   const [isSubmitting, setisSubmitting] = useState<boolean>(false)
@@ -228,20 +221,6 @@ export default function Home() {
                   <p className="text-red-500 text-sm mt-2">{modulusError}</p>
                 )}
               </div>
-              {xValuesIsValid && yValuesIsValid ? (
-                <div className="mb-4">
-                  {xValuesAndYValuesIsValid ? (
-                    <p>{input}</p>
-                  ) : (
-                    <p className="text-red-500 text-sm mt-2">
-                      length of <b>X VALUES</b> and <b>Y VALUES</b> should be
-                      equal
-                    </p>
-                  )}
-                </div>
-              ) : (
-                ''
-              )}
               <div>
                 <button
                   disabled={
@@ -260,7 +239,11 @@ export default function Home() {
             </form>
             <div className="mb-5">
               <p className="font-bold underline text-base mb-1">Answer</p>
-              <Latex>{answer}</Latex>
+              <div className="overflow-x-auto">
+                <div className="whitespace-nowrap">
+                  <Latex>{answer}</Latex>
+                </div>
+              </div>
             </div>
             <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
@@ -273,24 +256,38 @@ export default function Home() {
               <p className="font-bold text-base mt-1">
                 Finding the Lagrange Polynomials
               </p>
-              {steps.lagrange_polynomial_steps.map((value, index) => (
-                <div key={index} className="mt-10">
-                  <Latex>{value.step_1}</Latex>
-                  <Latex>{value.step_2}</Latex>
-                  <Latex>{value.step_3}</Latex>
-                  <Latex>{value.step_4}</Latex>
-                </div>
-              ))}
+              <div>
+                {steps.lagrange_polynomial_steps.map((value, index) => (
+                  <div key={index} className="mt-10">
+                    <div className="overflow-x-auto">
+                      <Latex>{value.step_1}</Latex>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Latex>{value.step_2}</Latex>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Latex>{value.step_3}</Latex>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Latex>{value.step_4}</Latex>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <p className="font-bold text-base mt-1">
-                Get the final Polynomial
+                Get the Final Polynomial
               </p>
-              <div className="mt-10">
-                <div className="overflow-x-auto">
-                  <div className="inline-block whitespace-pre-wrap">
+              <div className="mt-4">
+                <div className="overflow-x-auto mb-2">
+                  <div className="whitespace-nowrap">
                     <Latex>{steps.final_form.step_1}</Latex>
                   </div>
                 </div>
-                <Latex>{steps.final_form.step_2}</Latex>
+                <div className="overflow-x-auto">
+                  <div className="whitespace-nowrap">
+                    <Latex>{steps.final_form.step_2}</Latex>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

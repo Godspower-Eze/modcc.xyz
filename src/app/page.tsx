@@ -28,12 +28,10 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a className="hover:text-blue-400">
-                  <p>Multilinear Lagrange Interpolation Over Finite Field</p>
-                </a>
-              </li>
-              <li>
-                <a className="hover:text-blue-400">
+                <a
+                  className="hover:text-blue-400"
+                  href="/multivariate_lagrange_interpolation_over_finite_field"
+                >
                   <p>Multivariate Lagrange Interpolation Over Finite Field</p>
                 </a>
               </li>
