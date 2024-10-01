@@ -130,3 +130,11 @@ export const MULTILINEAR_LAGRANGE_DEFAULT_STEPS: MultilinearLagrangeInterpolatio
     },
     evaluations: [],
   };
+
+///////////////////////////////////////////////////////////
+////////////// MULTIVARIATE INTERPOLATION /////////////////
+///////////////////////////////////////////////////////////
+export const X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE = "(0 1), (2 3), (4 5)";
+export const Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE = "3, 2, 5";
+export const MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER =
+  "$\\tilde f(x_1,x_2) = 15x_1^5x_2^5 + 4x_1^5x_2^4 + 7x_1^5x_2^3 + 1x_1^5x_2^2 + 4x_1^5x_2 + 6x_1^4x_2^5 + 11x_1^4x_2^4 + 9x_1^4x_2^2 + 2x_1^4x_2 + 9x_1^2x_2^5 + 10x_1^2x_2^4 + 10x_1^2x_2^3 + 8x_1^2x_2^2 + 9x_1^2x_2 + 4x_1x_2^5 + 12x_1x_2^4 + 12x_1x_2^3 + 13x_1x_2^2 + 4x_1x_2 + 15x_2^5 + 11x_2^4 + 11x_2^3 + 2x_2^2 + 15x_2 + 10x_1^3x_2^5 + 6x_1^3x_2^4 + 16x_1^3x_2^3 + 15x_1^3x_2^2 + 4x_1^3x_2 + 9x_1^2x_2^5 + 1x_1^2x_2^4 + 1x_1^2x_2^3 + 8x_1^2x_2^2 + 15x_1^2x_2 + 13x_1x_2^4 + 11x_1x_2^3 + 12x_1x_2^2 + 15x_1x_2$";

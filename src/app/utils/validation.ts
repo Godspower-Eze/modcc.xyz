@@ -6,6 +6,24 @@ export const commaSeparatedToList = (input: string): Array<number> => {
   return values;
 };
 
+export const commaSeparatedToListForEvaluationPair = (input: string) => {
+  let splitted_value = input.split(",");
+  let evaluations_pairs: Array<Array<number>> = [];
+  splitted_value.forEach((element) => {
+    let evaluation_pair: Array<number> = [];
+    let elements = element.trim().replace("(", "").replace(")", "").split(" ");
+    elements.forEach((element) => {
+      evaluation_pair.push(parseInt(element));
+    });
+    evaluations_pairs.push(evaluation_pair);
+  });
+  return evaluations_pairs;
+};
+
+export const getNumberOfVars = (evaluations: Array<Array<number>>) => {
+  return evaluations[0].length;
+};
+
 export const isPrime = (input: number): boolean => {
   if (input <= 1) return false; // Numbers less than or equal to 1 are not prime
   if (input <= 3) return true; // 2 and 3 are prime numbers

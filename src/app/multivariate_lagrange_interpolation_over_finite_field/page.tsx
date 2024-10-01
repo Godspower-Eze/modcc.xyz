@@ -10,26 +10,33 @@ import { Footer } from '../components/footer'
 import {
   BACKEND_URL,
   UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  UNIVARIATE_LAGRANGE_GENERAL_FORM,
-  LAGRANGE_BASIS_FORMULA,
-  Y_VALUES_PLACEHOLDER,
-  X_VALUES_PLACEHOLDER,
   MODULUS_PLACEHOLDER,
   LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
+  X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
+  Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
+  MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
 } from '../constants'
 import {
-  arrayToLatexPoly,
-  getLagrangeInterpolationSteps,
+  arrayToLatexPolyforMultivariate,
   LagrangeInterpolationSteps,
 } from '../utils/latex'
-import { commaSeparatedToList, isPrime } from '../utils/validation'
+import {
+  commaSeparatedToList,
+  commaSeparatedToListForEvaluationPair,
+  getNumberOfVars,
+  isPrime,
+} from '../utils/validation'
 
 export default function Home() {
-  const [yValues, setYValues] = useState<string>(Y_VALUES_PLACEHOLDER)
+  const [yValues, setYValues] = useState<string>(
+    Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
+  )
   const [yValuesError, setYValuesError] = useState<string>('')
   const [yValuesIsValid, setYValuesIsValid] = useState<boolean>(true)
 
-  const [xValues, setXValues] = useState<string>(X_VALUES_PLACEHOLDER)
+  const [xValues, setXValues] = useState<string>(
+    X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
+  )
   const [xValuesError, setXValuesError] = useState<string>('')
   const [xValuesIsValid, setXValuesIsValid] = useState<boolean>(true)
 
@@ -42,7 +49,7 @@ export default function Home() {
   >(true)
 
   const [answer, setAnswer] = useState<string>(
-    LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
+    MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
   )
   const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
     UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
@@ -51,6 +58,7 @@ export default function Home() {
   const [isSubmitting, setisSubmitting] = useState<boolean>(false)
 
   const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
+  const evaluationsPairRegex = /^\(\d+( \d+)+\)(?:,\s*\(\d+( \d+)+\))*$/
   const numberRegex = /^\s*[1-9]\d*\s*$/
 
   const handleYValuesChange = (
@@ -77,8 +85,8 @@ export default function Home() {
     setXValuesError('')
     setXValuesIsValid(true)
     setFormValid(yValuesIsValid && modulusIsValid && true)
-    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
-      setXValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
+    if (!evaluationsPairRegex.test(e.target.value)) {
+      setXValuesError('invalid format. use format, e.g: (1 2), (3 4), (5 6)')
       setXValuesIsValid(false)
       setFormValid(false)
       return
@@ -93,7 +101,6 @@ export default function Home() {
     setModulusError('')
     setModulusIsValid(true)
     setFormValid(xValuesIsValid && yValuesIsValid && true)
-    console.log(xValuesIsValid && yValuesIsValid && true)
     if (!numberRegex.test(e.target.value)) {
       setModulusError('invalid format. enter a number')
       setModulusIsValid(false)
@@ -110,30 +117,43 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (
-      xValues == X_VALUES_PLACEHOLDER &&
-      yValues == Y_VALUES_PLACEHOLDER &&
-      modulus == MODULUS_PLACEHOLDER
-    ) {
-      setAnswer(LAGRANGE_INTERPOLATION_DEFAULT_ANSWER)
-      return
-    }
-    let xValuesAsList = commaSeparatedToList(xValues)
+    // if (
+    //   xValues == X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
+    //   yValues == Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
+    //   modulus == MODULUS_PLACEHOLDER
+    // ) {
+    //   setAnswer(LAGRANGE_INTERPOLATION_DEFAULT_ANSWER)
+    //   return
+    // }
+    let evaluation_points = commaSeparatedToListForEvaluationPair(xValues)
+    let numOfVars = getNumberOfVars(evaluation_points)
     let yValuesAsList = commaSeparatedToList(yValues)
     let modulusAsNumber = parseInt(modulus.trim())
+
+    console.log({
+      num_of_vars: numOfVars,
+      evaluation_points,
+      y_values: yValuesAsList,
+      field: modulusAsNumber,
+    })
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post('/lagrange_interpolation/', {
-        x_values: xValuesAsList,
-        y_values: yValuesAsList,
-        field: modulusAsNumber,
-      })
-      let answer = arrayToLatexPoly(response.data.coefficients)
-      let steps = getLagrangeInterpolationSteps(response.data.steps)
-      setSteps(steps)
-      setAnswer(`$${answer}$`)
+      const response = await axoisInstance.post(
+        '/multivariate_interpolation_over_finite_field/',
+        {
+          num_of_vars: numOfVars,
+          evaluation_points,
+          y_values: yValuesAsList,
+          field: modulusAsNumber,
+        },
+      )
+      let terms = response.data.terms
+      let answer = arrayToLatexPolyforMultivariate(terms, numOfVars)
+      // let steps = getLagrangeInterpolationSteps(response.data.steps)
+      // setSteps(steps)
+      setAnswer(`${answer}`)
       return
     } catch (error) {
       console.log(error)
@@ -161,28 +181,6 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  Y VALUES
-                </label>
-                <input
-                  required
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={yValues}
-                  onChange={(e) => handleYValuesChange(e, setYValues)}
-                  className={`mt-1 block w-full px-3 py-2 border ${
-                    yValuesError ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                />
-                {yValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="name"
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                >
                   X VALUES
                 </label>
                 <input
@@ -198,6 +196,28 @@ export default function Home() {
                 />
                 {xValuesError && (
                   <p className="text-red-500 text-sm mt-2">{xValuesError}</p>
+                )}
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="name"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  Y VALUES
+                </label>
+                <input
+                  required
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={yValues}
+                  onChange={(e) => handleYValuesChange(e, setYValues)}
+                  className={`mt-1 block w-full px-3 py-2 border ${
+                    yValuesError ? 'border-red-500' : 'border-gray-300'
+                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                />
+                {yValuesError && (
+                  <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
                 )}
               </div>
               <div className="mb-4">
@@ -245,18 +265,18 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="mb-5">
+            {/* <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
                 Step by Step Solution
               </p>
               <p className="font-bold text-base mt-1">General Form</p>
               <Latex>{UNIVARIATE_LAGRANGE_GENERAL_FORM}</Latex>
-              <Latex>{LAGRANGE_BASIS_FORMULA}</Latex>
+              <Latex>{LAGRANGE_BASIS_FORMULA}</Latex> */}
 
-              <p className="font-bold text-base mt-1">
+            {/* <p className="font-bold text-base mt-1">
                 Finding the Lagrange Polynomials
-              </p>
-              <div>
+              </p> */}
+            {/* <div>
                 {steps.lagrange_polynomial_steps.map((value, index) => (
                   <div key={index} className="mt-10">
                     <div className="overflow-x-auto">
@@ -273,8 +293,8 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
-              </div>
-              <p className="font-bold text-base mt-1">
+              </div> */}
+            {/* <p className="font-bold text-base mt-1">
                 Get the Final Polynomial
               </p>
               <div className="mt-4">
@@ -288,8 +308,8 @@ export default function Home() {
                     <Latex>{steps.final_form.step_2}</Latex>
                   </div>
                 </div>
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */}
           </div>
         </section>
 

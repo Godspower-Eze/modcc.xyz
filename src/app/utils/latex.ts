@@ -223,9 +223,9 @@ const coefficientsToLatexPoly = (
   coefficients: Array<[number, number]>
 ): string => {
   let evaluation_points = coefficients.length;
-  let num_of_vars = logBase(evaluation_points, 2);
+  let numOfVars = logBase(evaluation_points, 2);
   let main_terms = [];
-  for (let index = 0; index < num_of_vars; index++) {
+  for (let index = 0; index < numOfVars; index++) {
     main_terms.push(2 ** index);
   }
 
@@ -299,8 +299,8 @@ export const getMultilinearLagrangeInterpolationAnswer = (
 ) => {
   let latexPoly = coefficientsToLatexPoly(coefficients);
   let evaluation_points = coefficients.length;
-  let num_of_vars = logBase(evaluation_points, 2);
-  return `$\\tilde ${getVarsString(num_of_vars)} = ${latexPoly}$`;
+  let numOfVars = logBase(evaluation_points, 2);
+  return `$\\tilde ${getVarsString(numOfVars)} = ${latexPoly}$`;
 };
 
 const generateLatexForMultilinearLagrangePolynomialStep1 = (
@@ -373,8 +373,8 @@ const genLatexForMultilinearFinalPolynomialStep1 = (
     }
   }
   let evaluation_points = yValues.length;
-  let num_of_vars = logBase(evaluation_points, 2);
-  return `$\\tilde ${getVarsString(num_of_vars)} = ${res}$`;
+  let numOfVars = logBase(evaluation_points, 2);
+  return `$\\tilde ${getVarsString(numOfVars)} = ${res}$`;
 };
 
 const getMultlinearLagrangeFinalFormStep = (
@@ -427,4 +427,36 @@ export const getMultilinearLagrangeInterpolationStepsAndEvaluations = (
     evaluations,
   };
   return all_steps;
+};
+
+//////////////////////////////////////////////////////////
+////////////// MULTIVARIATE INTERPOLATION ////////////////
+/////////////////////////////////////////////////////////
+
+export const arrayToLatexPolyforMultivariate = (
+  terms: Array<[number, Array<Array<number>>]>,
+  numOfVars: number
+) => {
+  let poly = "";
+  for (let index = 0; index < terms.length; index++) {
+    const coefficient = terms[index][0];
+    let term_str = `${coefficient}`;
+    const vars = terms[index][1];
+    vars.forEach((element) => {
+      let variable = element[0];
+      let power = element[1];
+      if (power == 1) {
+        term_str += `x_${variable}`;
+      } else {
+        term_str += `x_${variable}^${power}`;
+      }
+    });
+    if (index == 0) {
+      poly += term_str;
+    } else {
+      poly += ` + ${term_str}`;
+    }
+  }
+  console.log(`$\\tilde ${getVarsString(numOfVars)} = ${poly}$`);
+  return `$\\tilde ${getVarsString(numOfVars)} = ${poly}$`;
 };
