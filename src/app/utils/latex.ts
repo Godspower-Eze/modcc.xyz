@@ -28,12 +28,24 @@ export const arrayToLatexPoly = (coefficients: Array<number>): string => {
     if (index == coefficients.length - 1) {
       let term = ` ${value}`;
       res += term;
-    } else if (index == coefficients.length - 2) {
-      let term = ` ${value}x +`;
-      res += term;
     } else {
-      let term = ` ${value}x^{${coefficients.length - 1 - index}} +`;
-      res += term;
+      if (value == 1) {
+        if (index == coefficients.length - 2) {
+          let term = "x +";
+          res += term;
+        } else {
+          let term = `x^{${coefficients.length - 1 - index}} +`;
+          res += term;
+        }
+      } else {
+        if (index == coefficients.length - 2) {
+          let term = ` ${value}x +`;
+          res += term;
+        } else {
+          let term = ` ${value}x^{${coefficients.length - 1 - index}} +`;
+          res += term;
+        }
+      }
     }
   });
   if (res.endsWith("+")) {

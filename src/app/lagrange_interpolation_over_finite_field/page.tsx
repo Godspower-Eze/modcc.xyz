@@ -133,7 +133,7 @@ export default function Home() {
       let answer = arrayToLatexPoly(response.data.coefficients)
       let steps = getLagrangeInterpolationSteps(response.data.steps)
       setSteps(steps)
-      setAnswer(`$${answer}$`)
+      setAnswer(`$f(x) = ${answer}$`)
       return
     } catch (error) {
       console.log(error)
