@@ -11,7 +11,6 @@ import {
   BACKEND_URL,
   UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
   MODULUS_PLACEHOLDER,
-  LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
@@ -129,13 +128,6 @@ export default function Home() {
     let numOfVars = getNumberOfVars(evaluation_points)
     let yValuesAsList = commaSeparatedToList(yValues)
     let modulusAsNumber = parseInt(modulus.trim())
-
-    console.log({
-      num_of_vars: numOfVars,
-      evaluation_points,
-      y_values: yValuesAsList,
-      field: modulusAsNumber,
-    })
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 

@@ -176,9 +176,15 @@ export const getLagrangeInterpolationSteps = (
 ////////////////////////////////////////////////////////
 
 interface MultilinearLagrangePolynomialStep {
-  step_1: string;
-  step_2: string;
-  step_3: string;
+  step_1: {
+    lhs: string;
+    rhs: string;
+  };
+  step_2: {
+    lhs: string;
+    rhs: string;
+  };
+  step_3: { lhs: string; rhs: string };
 }
 
 interface MultilinearLagrangeFinalFormStep {
@@ -306,7 +312,7 @@ export const getMultilinearLagrangeInterpolationAnswer = (
 const generateLatexForMultilinearLagrangePolynomialStep1 = (
   binary_string: string
 ) => {
-  let lhs = `L(${binary_string.split("").join(",")})`;
+  let lhs = `$L(${binary_string.split("").join(",")})$`;
   let rhs = "";
   for (let i = 0; i < binary_string.length; i++) {
     let variable = binary_string[i];
@@ -316,7 +322,8 @@ const generateLatexForMultilinearLagrangePolynomialStep1 = (
       rhs += "(L_1)";
     }
   }
-  return `$$${lhs} = ${rhs}$$`;
+  const step1 = { lhs, rhs: `$${rhs}$` };
+  return step1;
 };
 
 const generateLatexForMultilinearLagrangePolynomialStep2 = (
@@ -331,7 +338,8 @@ const generateLatexForMultilinearLagrangePolynomialStep2 = (
       res += `(x_{${i + 1}})`;
     }
   }
-  return `$$ = ${res}$$`;
+  const step2 = { lhs: "           ", rhs: `$${res}$` };
+  return step2;
 };
 
 export const genLatexForStepsInMultilinearLagrangePolynomial = (
@@ -350,7 +358,7 @@ export const genLatexForStepsInMultilinearLagrangePolynomial = (
     let stepsObj: MultilinearLagrangePolynomialStep = {
       step_1: step1,
       step_2: step2,
-      step_3: `$$= ${step3}$$`,
+      step_3: { lhs: "           ", rhs: `$${step3}$` },
     };
     res.push(stepsObj);
   }
@@ -398,8 +406,6 @@ const getEvaluations = (
   yValues: Array<number>
 ): Array<string> => {
   let res: Array<string> = [];
-  let evaluation_points = yValues.length;
-  let numOfVars = logBase(evaluation_points, 2);
   for (let index = 0; index < binaryStrings.length; index++) {
     const binaryString = binaryStrings[index];
     const evaluation_string = `$$\\tilde f(${binaryString

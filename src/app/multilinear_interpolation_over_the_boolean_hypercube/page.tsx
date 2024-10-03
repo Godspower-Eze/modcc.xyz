@@ -11,6 +11,7 @@ import {
   BACKEND_URL,
   LAGRANGE_BASIS_FORMULA,
   MULTILINEAR_LAGRANGE_GENERAL_FORM,
+  MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
   MULTILINEAR_LAGRANGE_BASIS_FORMULA,
   MULTILINEAR_LAGRANGE_DEFAULT_STEPS,
 } from '../constants'
@@ -23,7 +24,6 @@ import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 const yValuesPlaceHolder = '3, 2, 5, 7, 9'
 const modulusPlaceHolder = '17'
-const defaultAnswer = '$13x^4 + 9x^3 + 3x^2 + 8x + 3$'
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
@@ -34,7 +34,9 @@ export default function Home() {
   const [modulusError, setModulusError] = useState<string>('')
   const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
 
-  const [answer, setAnswer] = useState<string>(defaultAnswer)
+  const [answer, setAnswer] = useState<string>(
+    MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
+  )
   const [steps, setSteps] = useState<
     MultilinearLagrangeInterpolationStepsAndEvaluations
   >(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
@@ -109,6 +111,7 @@ export default function Home() {
         response.data.steps,
         response.data.coefficients,
       )
+      console.log(steps)
       setSteps(steps)
       setAnswer(`$${answer}$`)
       return
@@ -219,14 +222,38 @@ export default function Home() {
                 {steps.multilinear_lagrange_polynomial_steps.map(
                   (value, index) => (
                     <div key={index} className="mt-10">
-                      <div className="overflow-x-auto">
-                        <Latex>{value.step_1}</Latex>
+                      <div className="flex pb-4">
+                        <div className="w-1/2 overflow-x-auto">
+                          <Latex>{value.step_1.lhs}</Latex>
+                        </div>
+                        <div className="w-1/3 overflow-x-auto">=</div>
+                        <div className="w-1/2 overflow-x-auto">
+                          <div className="whitespace-nowrap">
+                            <Latex>{value.step_1.rhs}</Latex>
+                          </div>
+                        </div>
                       </div>
-                      <div className="overflow-x-auto">
-                        <Latex>{value.step_2}</Latex>
+                      <div className="flex pb-4">
+                        <div className="w-1/2 overflow-x-auto">
+                          <Latex>{value.step_2.lhs}</Latex>
+                        </div>
+                        <div className="w-1/3 overflow-x-auto">=</div>
+                        <div className="w-1/2 overflow-x-auto">
+                          <div className="whitespace-nowrap">
+                            <Latex>{value.step_2.rhs}</Latex>
+                          </div>
+                        </div>
                       </div>
-                      <div className="overflow-x-auto">
-                        <Latex>{value.step_3}</Latex>
+                      <div className="flex">
+                        <div className="w-1/2 overflow-x-auto">
+                          <Latex>{value.step_3.lhs}</Latex>
+                        </div>
+                        <div className="w-1/3 overflow-x-auto">=</div>
+                        <div className="w-1/2 overflow-x-auto">
+                          <div className="whitespace-nowrap">
+                            <Latex>{value.step_3.rhs}</Latex>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ),
