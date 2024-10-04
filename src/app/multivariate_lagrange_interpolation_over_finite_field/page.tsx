@@ -50,11 +50,12 @@ export default function Home() {
   const [answer, setAnswer] = useState<string>(
     MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
   )
-  const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
-    UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  )
+  // const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
+  //   UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
+  // )
   const [formValid, setFormValid] = useState<boolean>(true)
-  const [isSubmitting, setisSubmitting] = useState<boolean>(false)
+
+  const [loading, setLoading] = useState<boolean>(false)
 
   const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
   const evaluationsPairRegex = /^\(\d+( \d+)+\)(?:,\s*\(\d+( \d+)+\))*$/
@@ -116,14 +117,16 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // if (
-    //   xValues == X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
-    //   yValues == Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
-    //   modulus == MODULUS_PLACEHOLDER
-    // ) {
-    //   setAnswer(LAGRANGE_INTERPOLATION_DEFAULT_ANSWER)
-    //   return
-    // }
+    setLoading(true)
+    if (
+      xValues == X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
+      yValues == Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE &&
+      modulus == MODULUS_PLACEHOLDER
+    ) {
+      setAnswer(MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER)
+      setLoading(false)
+      return
+    }
     let evaluation_points = commaSeparatedToListForEvaluationPair(xValues)
     let numOfVars = getNumberOfVars(evaluation_points)
     let yValuesAsList = commaSeparatedToList(yValues)
@@ -146,6 +149,7 @@ export default function Home() {
       // let steps = getLagrangeInterpolationSteps(response.data.steps)
       // setSteps(steps)
       setAnswer(`${answer}`)
+      setLoading(false)
       return
     } catch (error) {
       console.log(error)
@@ -235,9 +239,7 @@ export default function Home() {
               </div>
               <div>
                 <button
-                  disabled={
-                    !formValid || isSubmitting || !xValuesAndYValuesIsValid
-                  }
+                  disabled={!formValid || !xValuesAndYValuesIsValid || loading}
                   type="submit"
                   className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
                     formValid
@@ -245,7 +247,35 @@ export default function Home() {
                       : 'bg-gray-400 cursor-not-allowed'
                   } focus:outline-none focus:ring-2 focus:ring-offset-2`}
                 >
-                  Compute
+                  {loading ? (
+                    <svg
+                      className="animate-spin h-4 w-12 mr-2 ml-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <circle
+                        className="opacity-75"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeDasharray="60"
+                        strokeDashoffset="10"
+                        strokeWidth="4"
+                      />
+                    </svg>
+                  ) : (
+                    'Compute'
+                  )}
                 </button>
               </div>
             </form>

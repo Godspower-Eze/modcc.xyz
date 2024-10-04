@@ -42,7 +42,8 @@ export default function Home() {
   >(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
 
   const [formValid, setFormValid] = useState<boolean>(true)
-  const [isSubmitting, setisSubmitting] = useState<boolean>(false)
+
+  const [loading, setLoading] = useState<boolean>(false)
 
   const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
   const numberRegex = /^\s*[1-9]\d*\s*$/
@@ -87,10 +88,13 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // if (yValues == yValuesPlaceHolder && modulus == modulusPlaceHolder) {
-    //   setAnswer(defaultAnswer)
-    //   return
-    // }
+    setLoading(true)
+    if (yValues == yValuesPlaceHolder && modulus == modulusPlaceHolder) {
+      setAnswer(MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER)
+      setSteps(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
+      setLoading(false)
+      return
+    }
     let yValuesAsList = commaSeparatedToList(yValues)
     let modulusAsNumber = parseInt(modulus.trim())
 
@@ -114,8 +118,10 @@ export default function Home() {
       console.log(steps)
       setSteps(steps)
       setAnswer(`$${answer}$`)
+      setLoading(false)
       return
     } catch (error) {
+      setLoading(false)
       console.log(error)
     }
   }
@@ -181,7 +187,7 @@ export default function Home() {
               </div>
               <div>
                 <button
-                  disabled={!formValid || isSubmitting}
+                  disabled={!formValid || loading}
                   type="submit"
                   className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
                     formValid
@@ -189,7 +195,35 @@ export default function Home() {
                       : 'bg-gray-400 cursor-not-allowed'
                   } focus:outline-none focus:ring-2 focus:ring-offset-2`}
                 >
-                  Compute
+                  {loading ? (
+                    <svg
+                      className="animate-spin h-4 w-12 mr-2 ml-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <circle
+                        className="opacity-75"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeDasharray="60"
+                        strokeDashoffset="10"
+                        strokeWidth="4"
+                      />
+                    </svg>
+                  ) : (
+                    'Compute'
+                  )}
                 </button>
               </div>
             </form>
