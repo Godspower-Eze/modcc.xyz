@@ -20,12 +20,16 @@ if (process.env.NEXT_PUBLIC_ENVIRONMENT == "local") {
 ////////////////////////////////////////////////////////
 ////////////// LAGRANGE INTERPOLATION /////////////////
 ////////////////////////////////////////////////////////
-
+export const DEFAULT_EVALUATION_POINT = "3";
+export const DEFAULT_EVALUATION = "7";
+export const COMMA_SEPARATED_NUMBERS_REGEX =
+  /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/;
+export const NUMBER_REGEX = /^\s*-?[0-9]\d*\s*$/;
 export const Y_VALUES_PLACEHOLDER = "3, 2, 5, 7, 9";
 export const X_VALUES_PLACEHOLDER = "0, 1, 2, 3, 4";
 export const MODULUS_PLACEHOLDER = "17";
 export const LAGRANGE_INTERPOLATION_DEFAULT_ANSWER =
-  "$f(x) = 13x^4 + 9x^3 + 3x^2 + 8x + 3$";
+  "$f(x) = 13x^{4} + 9x^{3} + 3x^{2} + 8x + 3$";
 
 export const UNIVARIATE_LAGRANGE_GENERAL_FORM =
   "$$f(x) = y_0L_0 + y_1L_1 + y_2L_2 + ... + y_{n-1}L_{n-1}$$";

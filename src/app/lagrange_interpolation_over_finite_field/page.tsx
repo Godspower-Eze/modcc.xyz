@@ -16,6 +16,10 @@ import {
   X_VALUES_PLACEHOLDER,
   MODULUS_PLACEHOLDER,
   LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
+  COMMA_SEPARATED_NUMBERS_REGEX,
+  NUMBER_REGEX,
+  DEFAULT_EVALUATION_POINT,
+  DEFAULT_EVALUATION,
 } from '../constants'
 import {
   arrayToLatexPoly,
@@ -36,6 +40,9 @@ export default function Home() {
   const [modulus, setModulus] = useState<string>(MODULUS_PLACEHOLDER)
   const [modulusError, setModulusError] = useState<string>('')
   const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
+  const [currentModulus, setCurrentModulus] = useState<number>(
+    parseInt(MODULUS_PLACEHOLDER),
+  )
 
   const [xValuesAndYValuesIsValid, setXValuesAndYValuesIsValid] = useState<
     boolean
@@ -44,15 +51,23 @@ export default function Home() {
   const [answer, setAnswer] = useState<string>(
     LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   )
+  const [evaluationPoint, setEvaluationPoint] = useState<string>(
+    DEFAULT_EVALUATION_POINT,
+  )
+  const [evaluationPointError, setEvaluationPointError] = useState<string>('')
+  const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
+    true,
+  )
+  const [evaluation, setEvaluation] = useState<string>(DEFAULT_EVALUATION)
+
   const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
     UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
   )
   const [formValid, setFormValid] = useState<boolean>(true)
 
-  const [loading, setLoading] = useState<boolean>(false)
+  const [mainLoading, setLoading] = useState<boolean>(false)
 
-  const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
-  const numberRegex = /^\s*[1-9]\d*\s*$/
+  const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false)
 
   const handleYValuesChange = (
     e: ChangeEvent<HTMLInputElement>,
@@ -62,7 +77,7 @@ export default function Home() {
     setYValuesError('')
     setYValuesIsValid(true)
     setFormValid(xValuesIsValid && modulusIsValid && true)
-    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
+    if (!COMMA_SEPARATED_NUMBERS_REGEX.test(e.target.value)) {
       setYValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
       setYValuesIsValid(false)
       setFormValid(false)
@@ -78,7 +93,7 @@ export default function Home() {
     setXValuesError('')
     setXValuesIsValid(true)
     setFormValid(yValuesIsValid && modulusIsValid && true)
-    if (!commaSeperatedNumbersRegex.test(e.target.value)) {
+    if (!COMMA_SEPARATED_NUMBERS_REGEX.test(e.target.value)) {
       setXValuesError('invalid format. use format, e.g: 1, 2, 3, 4')
       setXValuesIsValid(false)
       setFormValid(false)
@@ -94,8 +109,7 @@ export default function Home() {
     setModulusError('')
     setModulusIsValid(true)
     setFormValid(xValuesIsValid && yValuesIsValid && true)
-    console.log(xValuesIsValid && yValuesIsValid && true)
-    if (!numberRegex.test(e.target.value)) {
+    if (!NUMBER_REGEX.test(e.target.value)) {
       setModulusError('invalid format. enter a number')
       setModulusIsValid(false)
       setFormValid(false)
@@ -129,19 +143,68 @@ export default function Home() {
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post('/lagrange_interpolation/', {
-        x_values: xValuesAsList,
-        y_values: yValuesAsList,
-        field: modulusAsNumber,
-      })
-      let answer = arrayToLatexPoly(response.data.coefficients)
-      let steps = getLagrangeInterpolationSteps(response.data.steps)
+      const interpolationResponse = await axoisInstance.post(
+        '/lagrange_interpolation/',
+        {
+          x_values: xValuesAsList,
+          y_values: yValuesAsList,
+          field: modulusAsNumber,
+        },
+      )
+      let answer = arrayToLatexPoly(interpolationResponse.data.coefficients)
+      let steps = getLagrangeInterpolationSteps(
+        interpolationResponse.data.steps,
+      )
+      const evaluationResponse = await axoisInstance.post(
+        '/evaluate_univariate_poly/',
+        {
+          evaluation_point: 3,
+          poly_string: answer,
+          field: modulusAsNumber,
+        },
+      )
+      setEvaluation(evaluationResponse.data.evaluation)
       setSteps(steps)
       setAnswer(`$f(x) = ${answer}$`)
+      setCurrentModulus(modulusAsNumber)
       setLoading(false)
       return
     } catch (error) {
       setLoading(false)
+      console.log(error)
+    }
+  }
+
+  const handleChangeEvaluationPoint = (
+    e: ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
+    setter(e.target.value)
+    setEvaluationPointError('')
+    setEvaluationPointIsValid(true)
+    if (!NUMBER_REGEX.test(e.target.value)) {
+      setEvaluationPointError('invalid format. enter a number')
+      setEvaluationPointIsValid(false)
+      return
+    }
+  }
+
+  const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setEvaluationLoading(true)
+
+    const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
+    try {
+      const response = await axoisInstance.post('/evaluate_univariate_poly/', {
+        evaluation_point: parseInt(evaluationPoint.trim()),
+        poly_string: answer.split('=')[1].split('$')[0],
+        field: currentModulus,
+      })
+      setEvaluation(response.data.evaluation)
+      setEvaluationLoading(false)
+      return
+    } catch (error) {
+      setEvaluationLoading(false)
       console.log(error)
     }
   }
@@ -229,7 +292,9 @@ export default function Home() {
               </div>
               <div>
                 <button
-                  disabled={!formValid || !xValuesAndYValuesIsValid || loading}
+                  disabled={
+                    !formValid || !xValuesAndYValuesIsValid || mainLoading
+                  }
                   type="submit"
                   className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white items-center ${
                     formValid
@@ -237,7 +302,7 @@ export default function Home() {
                       : 'bg-gray-400 cursor-not-allowed'
                   } focus:outline-none focus:ring-2 focus:ring-offset-2`}
                 >
-                  {loading ? (
+                  {mainLoading ? (
                     <svg
                       className="animate-spin h-4 w-12 mr-2 ml-2 text-white"
                       xmlns="http://www.w3.org/2000/svg"
@@ -264,17 +329,89 @@ export default function Home() {
                       />
                     </svg>
                   ) : (
-                    'Compute'
+                    'compute'
                   )}
                 </button>
               </div>
             </form>
-            <div className="mb-5">
+            <div className="mb-3">
               <p className="font-bold underline text-base mb-1">Answer</p>
               <div className="overflow-x-auto">
                 <div className="whitespace-nowrap">
                   <Latex>{answer}</Latex>
                 </div>
+              </div>
+              <p className="font-bold underline text-sm mb-1 mt-2">
+                Evaluation
+              </p>
+              <div>
+                <form onSubmit={(e) => handleSubmitEvaluation(e)}>
+                  <div className="pt-2 pb-2">
+                    <span>
+                      <Latex>$f($</Latex>
+                    </span>
+                    <input
+                      type="text"
+                      value={evaluationPoint}
+                      onChange={(e) =>
+                        handleChangeEvaluationPoint(e, setEvaluationPoint)
+                      }
+                      className="border border-blue-400 text-center w-8 px-1 rounded-md"
+                    ></input>
+                    <span>
+                      <Latex>$)$</Latex>
+                    </span>
+                    <span>
+                      <Latex>$= {evaluation}$</Latex>
+                    </span>
+                  </div>
+                  {evaluationPointError && (
+                    <p className="text-red-500 text-xs mt-2">
+                      {evaluationPointError}
+                    </p>
+                  )}
+                  <div>
+                    <button
+                      disabled={!evaluationPointIsValid || evaluationLoading}
+                      type="submit"
+                      className={`inline-flex justify-center py-1 px-2 border border-transparent shadow-sm text-xm font-light rounded-md text-white items-center ${
+                        evaluationPointIsValid
+                          ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                          : 'bg-gray-400 cursor-not-allowed'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                    >
+                      {evaluationLoading ? (
+                        <svg
+                          className="animate-spin h-3 w-10 mr-1 ml-1 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <circle
+                            className="opacity-75"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeDasharray="60"
+                            strokeDashoffset="10"
+                            strokeWidth="4"
+                          />
+                        </svg>
+                      ) : (
+                        'evaluate'
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
             <div className="mb-5">
