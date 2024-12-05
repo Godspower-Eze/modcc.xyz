@@ -16,9 +16,10 @@ import {
   MULTILINEAR_LAGRANGE_DEFAULT_STEPS,
 } from '../constants'
 import {
-  getMultilinearLagrangeInterpolationAnswer,
   getMultilinearLagrangeInterpolationStepsAndEvaluations,
   MultilinearLagrangeInterpolationStepsAndEvaluations,
+  Answer,
+  getVarsString
 } from '../utils/latex'
 import { commaSeparatedToList, isPrime } from '../utils/validation'
 
@@ -34,7 +35,7 @@ export default function Home() {
   const [modulusError, setModulusError] = useState<string>('')
   const [modulusIsValid, setModulusIsValid] = useState<boolean>(true)
 
-  const [answer, setAnswer] = useState<string>(
+  const [answer, setAnswer] = useState<Answer>(
     MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
   )
   const [steps, setSteps] = useState<
@@ -108,16 +109,17 @@ export default function Home() {
           field: modulusAsNumber,
         },
       )
-      let answer = getMultilinearLagrangeInterpolationAnswer(
-        response.data.coefficients,
-      )
+      let poly = response.data.poly;
+      let num_of_vars = response.data.properties.num_of_vars;
+      let answer: Answer = {lhs: getVarsString(num_of_vars), rhs: poly}
+      setAnswer(answer)
+      console.log(response.data.steps)
       let steps = getMultilinearLagrangeInterpolationStepsAndEvaluations(
         response.data.steps,
         response.data.coefficients,
       )
       console.log(steps)
       setSteps(steps)
-      setAnswer(`$${answer}$`)
       setLoading(false)
       return
     } catch (error) {
@@ -231,7 +233,7 @@ export default function Home() {
               <p className="font-bold underline text-base mb-1">Answer</p>
               <div className="overflow-x-auto">
                 <div className="whitespace-nowrap">
-                  <Latex>{answer}</Latex>
+                  <Latex>${answer.lhs} = {answer.rhs}$</Latex>
                 </div>
               </div>
             </div>

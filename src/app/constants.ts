@@ -91,8 +91,10 @@ export const UNIVARIATE_LAGRANGE_DEFAULT_STEPS: LagrangeInterpolationSteps = {
 ////////////////////////////////////////////////////////
 ////////////// MULTILINEAR INTERPOLATION /////////////////
 ////////////////////////////////////////////////////////
-export const MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER =
-  "$\\tilde f(x_1,x_2,x_3) = 16x_{1} +2x_{2} +3x_{1}x_{2} +6x_{3} +9x_{1}x_{3} +6x_{2}x_{3} +6x_{1}x_{2}x_{3} + 3$";
+export const MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER = {
+  lhs: "\\tilde f(x_1,x_2,x_3)",
+  rhs: "16x_{1} +2x_{2} +3x_{1}x_{2} +6x_{3} +9x_{1}x_{3} +6x_{2}x_{3} +6x_{1}x_{2}x_{3} + 3",
+};
 export const MULTILINEAR_LAGRANGE_GENERAL_FORM =
   "$$ \\tilde f(x_1, ..., x_n) = \\sum _{w \\in \\{0, 1\\}^n} f(w).L_w(x_1, ..., x_n)$$";
 export const MULTILINEAR_LAGRANGE_BASIS_FORMULA =

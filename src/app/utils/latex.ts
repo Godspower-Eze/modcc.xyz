@@ -205,9 +205,14 @@ interface MultilinearLagrangeFinalFormStep {
 }
 
 export interface MultilinearLagrangeInterpolationStepsAndEvaluations {
-  multilinear_lagrange_polynomial_steps: Array<MultilinearLagrangePolynomialStep>;
-  final_form: MultilinearLagrangeFinalFormStep;
+  interpolation_steps: Array<MultilinearLagrangePolynomialStep>;
+  combination_step: string;
   evaluations: Array<string>;
+}
+
+export interface Answer {
+  lhs: string;
+  rhs: string;
 }
 
 function logBase(value: number, base: number): number {
@@ -303,22 +308,13 @@ const coefficientsToLatexPoly = (
   return `${latexPoly}`;
 };
 
-const getVarsString = (numOfVars: number): string => {
+export const getVarsString = (numOfVars: number): string => {
   let vars = [];
   for (let index = 0; index < numOfVars; index++) {
     let variable = `x_${index + 1}`;
     vars.push(variable);
   }
   return `f(${vars.join(",")})`;
-};
-
-export const getMultilinearLagrangeInterpolationAnswer = (
-  coefficients: Array<[number, number]>
-) => {
-  let latexPoly = coefficientsToLatexPoly(coefficients);
-  let evaluation_points = coefficients.length;
-  let numOfVars = logBase(evaluation_points, 2);
-  return `$\\tilde ${getVarsString(numOfVars)} = ${latexPoly}$`;
 };
 
 const generateLatexForMultilinearLagrangePolynomialStep1 = (
