@@ -246,7 +246,7 @@ export default function Home() {
               </Latex>
               <Latex>{MULTILINEAR_LAGRANGE_BASIS_FORMULA}</Latex>
               <Latex>
-                {LAGRANGE_BASIS_FORMULA} where $L_0 = (1 - x)$ and $L_1 = x$
+                {LAGRANGE_BASIS_FORMULA} where $L_0 = (1 - x_i)$ and $L_1 = x_i$
               </Latex>
               <div>
                 {' '}
