@@ -9,11 +9,11 @@ import { Navbar } from '../components/navbar'
 import { Footer } from '../components/footer'
 import {
   BACKEND_URL,
-  LAGRANGE_BASIS_FORMULA,
-  MULTILINEAR_LAGRANGE_GENERAL_FORM,
   MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
-  MULTILINEAR_LAGRANGE_BASIS_FORMULA,
-  MULTILINEAR_LAGRANGE_DEFAULT_STEPS,
+  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION,
+  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT,
+  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
+  NUMBER_REGEX
 } from '../constants'
 import {
   getMultilinearLagrangeInterpolationAnswer,
@@ -24,6 +24,7 @@ import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 const yValuesPlaceHolder = '3, 2, 5, 7, 9'
 const modulusPlaceHolder = '17'
+const test = 6;
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
@@ -37,13 +38,22 @@ export default function Home() {
   const [answer, setAnswer] = useState<string>(
     MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
   )
-  const [steps, setSteps] = useState<
-    MultilinearLagrangeInterpolationStepsAndEvaluations
-  >(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
 
   const [formValid, setFormValid] = useState<boolean>(true)
 
   const [loading, setLoading] = useState<boolean>(false)
+
+  const [evaluationPoints, setEvaluationPoints] = useState<Array<number>>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
+  const [evaluationPoint, setEvaluationPoint] = useState<string>(
+      MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT,
+    )
+    const [evaluationPointError, setEvaluationPointError] = useState<string>('')
+    const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
+      true,
+    )
+    const [evaluation, setEvaluation] = useState<string>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION)
+
+  const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false)
 
   const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
   const numberRegex = /^\s*[1-9]\d*\s*$/
@@ -86,12 +96,48 @@ export default function Home() {
     }
   }
 
+  const handleChangeEvaluationPoint = (
+    e: ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
+    // console.log(e.target.dataset.key)
+    setter(e.target.value)
+    
+    setEvaluationPointError('')
+    setEvaluationPointIsValid(true)
+    if (!NUMBER_REGEX.test(e.target.value)) {
+      setEvaluationPointError('invalid format. enter a number')
+      setEvaluationPointIsValid(false)
+      return
+    }
+  }
+
+  const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setEvaluationLoading(true)
+
+    const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
+    try {
+      // const response = await axoisInstance.post('/evaluate_univariate_poly/', {
+      //   evaluation_point: parseInt(evaluationPoint.trim()),
+      //   poly_string: answer.split('=')[1].split('$')[0],
+      //   field: currentModulus,
+      // })
+      // setEvaluation(response.data.evaluation)
+      // setEvaluationLoading(false)
+      return
+    } catch (error) {
+      setEvaluationLoading(false)
+      console.log(error)
+    }
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     if (yValues == yValuesPlaceHolder && modulus == modulusPlaceHolder) {
       setAnswer(MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER)
-      setSteps(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
+      // setSteps(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
       setLoading(false)
       return
     }
@@ -108,16 +154,8 @@ export default function Home() {
           field: modulusAsNumber,
         },
       )
-      let answer = getMultilinearLagrangeInterpolationAnswer(
-        response.data.coefficients,
-      )
-      let steps = getMultilinearLagrangeInterpolationStepsAndEvaluations(
-        response.data.steps,
-        response.data.coefficients,
-      )
-      console.log(steps)
-      setSteps(steps)
-      setAnswer(`$${answer}$`)
+      const answer = response.data.poly;
+      setAnswer(answer)
       setLoading(false)
       return
     } catch (error) {
@@ -227,15 +265,92 @@ export default function Home() {
                 </button>
               </div>
             </form>
-            <div className="mb-5">
+            <div className="mb-3">
               <p className="font-bold underline text-base mb-1">Answer</p>
               <div className="overflow-x-auto">
                 <div className="whitespace-nowrap">
                   <Latex>{answer}</Latex>
                 </div>
               </div>
+              <p className="font-bold underline text-sm mb-1 mt-2">
+                Evaluation
+              </p>
+              <div>
+                  <form onSubmit={(e) => handleSubmitEvaluation(e)}>
+                    <div className="pt-2 pb-2">
+                      <span>
+                        <Latex>$f($</Latex>
+                    </span>
+                    {evaluationPoints.map((value, index) =>
+                      <input
+                        key={index + 1}
+                        data-key = {index + 1}
+                        type="text"
+                        value={value}
+                        onChange={(e) =>
+                          handleChangeEvaluationPoint(e, setEvaluationPoint)
+                        }
+                        className="border border-blue-400 text-center w-8 px-1 rounded-md"
+                      >
+                      </input>
+                    )}
+                      <span>
+                        <Latex>$)$</Latex>
+                      </span>
+                      <span>
+                        <Latex>$= {evaluation}$</Latex>
+                      </span>
+                    </div>
+                    {evaluationPointError && (
+                      <p className="text-red-500 text-xs mt-2">
+                        {evaluationPointError}
+                      </p>
+                    )}
+                    <div>
+                      <button
+                        disabled={!evaluationPointIsValid || evaluationLoading}
+                        type="submit"
+                        className={`inline-flex justify-center py-1 px-2 border border-transparent shadow-sm text-xm font-light rounded-md text-white items-center ${
+                          evaluationPointIsValid
+                            ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                            : 'bg-gray-400 cursor-not-allowed'
+                        } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                      >
+                        {evaluationLoading ? (
+                          <svg
+                            className="animate-spin h-3 w-10 mr-1 ml-1 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <circle
+                              className="opacity-75"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeDasharray="60"
+                              strokeDashoffset="10"
+                              strokeWidth="4"
+                            />
+                          </svg>
+                        ) : (
+                          'evaluate'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
             </div>
-            <div className="mb-5">
+            {/* <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
                 Step by Step Solution
               </p>
@@ -320,7 +435,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
         <section className="w-full md:w-1/4 p-4"></section>

@@ -20,8 +20,8 @@ if (process.env.NEXT_PUBLIC_ENVIRONMENT == "local") {
 ////////////////////////////////////////////////////////
 ////////////// LAGRANGE INTERPOLATION /////////////////
 ////////////////////////////////////////////////////////
-export const DEFAULT_EVALUATION_POINT = "3";
-export const DEFAULT_EVALUATION = "7";
+export const UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION_POINT = "3";
+export const UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION = "7";
 export const COMMA_SEPARATED_NUMBERS_REGEX =
   /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/;
 export const NUMBER_REGEX = /^\s*-?[0-9]\d*\s*$/;
@@ -91,6 +91,9 @@ export const UNIVARIATE_LAGRANGE_DEFAULT_STEPS: LagrangeInterpolationSteps = {
 ////////////////////////////////////////////////////////
 ////////////// MULTILINEAR INTERPOLATION /////////////////
 ////////////////////////////////////////////////////////
+export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS = [1, 2, 3];
+export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT = "3";
+export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION = "7";
 export const MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER =
   "$\\tilde f(x_1,x_2,x_3) = 16x_{1} +2x_{2} +3x_{1}x_{2} +6x_{3} +9x_{1}x_{3} +6x_{2}x_{3} +6x_{1}x_{2}x_{3} + 3$";
 export const MULTILINEAR_LAGRANGE_GENERAL_FORM =

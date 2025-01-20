@@ -18,8 +18,8 @@ import {
   LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   COMMA_SEPARATED_NUMBERS_REGEX,
   NUMBER_REGEX,
-  DEFAULT_EVALUATION_POINT,
-  DEFAULT_EVALUATION,
+  UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION,
+  UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION_POINT,
 } from '../constants'
 import {
   arrayToLatexPoly,
@@ -52,13 +52,13 @@ export default function Home() {
     LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   )
   const [evaluationPoint, setEvaluationPoint] = useState<string>(
-    DEFAULT_EVALUATION_POINT,
+    UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION_POINT,
   )
   const [evaluationPointError, setEvaluationPointError] = useState<string>('')
   const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
     true,
   )
-  const [evaluation, setEvaluation] = useState<string>(DEFAULT_EVALUATION)
+  const [evaluation, setEvaluation] = useState<string>(UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION)
 
   const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
     UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
@@ -414,7 +414,7 @@ export default function Home() {
                 </form>
               </div>
             </div>
-            <div className="mb-5">
+            {/* <div className="mb-5">
               <p className="font-bold underline text-base mb-1">
                 Step by Step Solution
               </p>
@@ -458,7 +458,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
 
