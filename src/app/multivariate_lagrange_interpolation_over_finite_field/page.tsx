@@ -14,6 +14,9 @@ import {
   X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
+  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
+  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION,
+  MULTILINEAR_INTERPOLATION_NUMBER_REGEX
 } from '../constants'
 import {
   arrayToLatexPolyforMultivariate,
@@ -25,6 +28,10 @@ import {
   getNumberOfVars,
   isPrime,
 } from '../utils/validation'
+
+const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
+const evaluationsPairRegex = /^\(\d+( \d+)+\)(?:,\s*\(\d+( \d+)+\))*$/
+const numberRegex = /^\s*[1-9]\d*\s*$/
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(
@@ -50,16 +57,21 @@ export default function Home() {
   const [answer, setAnswer] = useState<string>(
     MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
   )
-  // const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
-  //   UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  // )
   const [formValid, setFormValid] = useState<boolean>(true)
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
-  const evaluationsPairRegex = /^\(\d+( \d+)+\)(?:,\s*\(\d+( \d+)+\))*$/
-  const numberRegex = /^\s*[1-9]\d*\s*$/
+  const [evaluationPoints, setEvaluationPoints] = useState<Array<string>>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
+  const [evaluationPointError, setEvaluationPointError] = useState<string>('')
+  const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
+      true,
+    )
+  const [evaluation, setEvaluation] = useState<string>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION)
+
+  const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false)
+  const [currentModulus, setCurrentModulus] = useState<number>(
+    parseInt(MODULUS_PLACEHOLDER),
+  )
 
   const handleYValuesChange = (
     e: ChangeEvent<HTMLInputElement>,
@@ -112,6 +124,64 @@ export default function Home() {
       setModulusIsValid(false)
       setFormValid(false)
       return
+    }
+  }
+
+  const handleChangeEvaluationPoint = (
+      e: ChangeEvent<HTMLInputElement>,
+  ) => {
+      const key = parseInt(e.target.dataset.key!)
+      const value = e.target.value
+      let evalPoints = [...evaluationPoints]
+      evalPoints[key - 1] = value
+      setEvaluationPoints(evalPoints)
+      setEvaluationPointError('')
+      setEvaluationPointIsValid(true)
+      if (!MULTILINEAR_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
+        setEvaluationPointError('invalid format. enter a number')
+        setEvaluationPointIsValid(false)
+        return
+      }
+      if (evalPoints.every((value) => value.trim() == "")) {
+        setEvaluationPointIsValid(false)
+        return
+      }
+  }
+
+  const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setEvaluationLoading(true)
+    const evalPoints = evaluationPoints.map((value, index) => {
+      if (value.trim() != "") {
+        return [index + 1, parseInt(value.trim())]
+      } else {
+        return [index + 1, value.trim()]
+      }
+    }).filter((value) => value[1] !== "");
+    const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
+    try {
+      if (evalPoints.length == evaluationPoints.length) {
+        const response = await axoisInstance.post('/full_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: currentModulus,
+        })
+        const evaluation = response.data.evaluation;
+        setEvaluation(evaluation)
+      } else {
+        const response = await axoisInstance.post('/partial_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: currentModulus,
+        })
+        const evaluation = response.data.evaluation;
+        setEvaluation(evaluation)
+      }
+      setEvaluationLoading(false)
+      return
+    } catch (error) {
+      setEvaluationLoading(false)
+      console.log(error)
     }
   }
 
@@ -279,13 +349,90 @@ export default function Home() {
                 </button>
               </div>
             </form>
-            <div className="mb-5">
+            <div className="mb-3">
               <p className="font-bold underline text-base mb-1">Answer</p>
               <div className="overflow-x-auto">
                 <div className="whitespace-nowrap">
                   <Latex>{answer}</Latex>
                 </div>
               </div>
+              <p className="font-bold underline text-sm mb-1 mt-2">
+                Evaluation
+              </p>
+                  <div>
+                    <form onSubmit={(e) => handleSubmitEvaluation(e)}>
+                      <div className="pt-2 pb-2">
+                        <span>
+                          <Latex>$f($</Latex>
+                      </span>
+                      {evaluationPoints.map((value, index) =>
+                        <input
+                          key={index + 1}
+                          data-key = {index + 1}
+                          type="text"
+                          value={value}
+                          onChange={(e) =>
+                            handleChangeEvaluationPoint(e)
+                          }
+                          className="border border-blue-400 text-center w-8 px-1 rounded-md mr-1 ml-1 resize-x"
+                        >
+                        </input>
+                      )}
+                        <span>
+                          <Latex>$)$</Latex>
+                        </span>
+                        <span>
+                          <Latex>$=$ {evaluation}</Latex>
+                        </span>
+                      </div>
+                      {evaluationPointError && (
+                        <p className="text-red-500 text-xs mt-2">
+                          {evaluationPointError}
+                        </p>
+                      )}
+                      <div>
+                        <button
+                          disabled={!evaluationPointIsValid || evaluationLoading}
+                          type="submit"
+                          className={`inline-flex justify-center py-1 px-2 border border-transparent shadow-sm text-xm font-light rounded-md text-white items-center ${
+                            evaluationPointIsValid
+                              ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                              : 'bg-gray-400 cursor-not-allowed'
+                          } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                        >
+                          {evaluationLoading ? (
+                            <svg
+                              className="animate-spin h-3 w-10 mr-1 ml-1 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <circle
+                                className="opacity-75"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeDasharray="60"
+                                strokeDashoffset="10"
+                                strokeWidth="4"
+                              />
+                            </svg>
+                          ) : (
+                            'evaluate'
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
             </div>
             {/* <div className="mb-5">
               <p className="font-bold underline text-base mb-1">

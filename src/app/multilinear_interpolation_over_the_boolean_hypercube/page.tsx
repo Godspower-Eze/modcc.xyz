@@ -11,9 +11,8 @@ import {
   BACKEND_URL,
   MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER,
   MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION,
-  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT,
   MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
-  NUMBER_REGEX
+  MULTILINEAR_INTERPOLATION_NUMBER_REGEX
 } from '../constants'
 import {
   getMultilinearLagrangeInterpolationAnswer,
@@ -24,7 +23,6 @@ import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 const yValuesPlaceHolder = '3, 2, 5, 7, 9'
 const modulusPlaceHolder = '17'
-const test = 6;
 
 export default function Home() {
   const [yValues, setYValues] = useState<string>(yValuesPlaceHolder)
@@ -43,17 +41,17 @@ export default function Home() {
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  const [evaluationPoints, setEvaluationPoints] = useState<Array<number>>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
-  const [evaluationPoint, setEvaluationPoint] = useState<string>(
-      MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT,
-    )
-    const [evaluationPointError, setEvaluationPointError] = useState<string>('')
-    const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
+  const [evaluationPoints, setEvaluationPoints] = useState<Array<string>>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
+  const [evaluationPointError, setEvaluationPointError] = useState<string>('')
+  const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
       true,
     )
-    const [evaluation, setEvaluation] = useState<string>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION)
+  const [evaluation, setEvaluation] = useState<string>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION)
 
   const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false)
+  const [currentModulus, setCurrentModulus] = useState<number>(
+    parseInt(modulusPlaceHolder),
+  )
 
   const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
   const numberRegex = /^\s*[1-9]\d*\s*$/
@@ -98,15 +96,20 @@ export default function Home() {
 
   const handleChangeEvaluationPoint = (
     e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
-    // console.log(e.target.dataset.key)
-    setter(e.target.value)
-    
+    const key = parseInt(e.target.dataset.key!)
+    const value = e.target.value
+    let evalPoints = [...evaluationPoints]
+    evalPoints[key - 1] = value
+    setEvaluationPoints(evalPoints)
     setEvaluationPointError('')
     setEvaluationPointIsValid(true)
-    if (!NUMBER_REGEX.test(e.target.value)) {
+    if (!MULTILINEAR_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
       setEvaluationPointError('invalid format. enter a number')
+      setEvaluationPointIsValid(false)
+      return
+    }
+    if (evalPoints.every((value) => value.trim() == "")) {
       setEvaluationPointIsValid(false)
       return
     }
@@ -115,16 +118,33 @@ export default function Home() {
   const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setEvaluationLoading(true)
-
+    const evalPoints = evaluationPoints.map((value, index) => {
+      if (value.trim() != "") {
+        return [index + 1, parseInt(value.trim())]
+      } else {
+        return [index + 1, value.trim()]
+      }
+    }).filter((value) => value[1] !== "");
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
     try {
-      // const response = await axoisInstance.post('/evaluate_univariate_poly/', {
-      //   evaluation_point: parseInt(evaluationPoint.trim()),
-      //   poly_string: answer.split('=')[1].split('$')[0],
-      //   field: currentModulus,
-      // })
-      // setEvaluation(response.data.evaluation)
-      // setEvaluationLoading(false)
+      if (evalPoints.length == evaluationPoints.length) {
+        const response = await axoisInstance.post('/full_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: currentModulus,
+        })
+        const evaluation = response.data.evaluation;
+        setEvaluation(evaluation)
+      } else {
+        const response = await axoisInstance.post('/partial_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: currentModulus,
+        })
+        const evaluation = response.data.evaluation;
+        setEvaluation(evaluation)
+      }
+      setEvaluationLoading(false)
       return
     } catch (error) {
       setEvaluationLoading(false)
@@ -137,7 +157,6 @@ export default function Home() {
     setLoading(true)
     if (yValues == yValuesPlaceHolder && modulus == modulusPlaceHolder) {
       setAnswer(MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER)
-      // setSteps(MULTILINEAR_LAGRANGE_DEFAULT_STEPS)
       setLoading(false)
       return
     }
@@ -157,6 +176,7 @@ export default function Home() {
       const answer = response.data.poly;
       setAnswer(answer)
       setLoading(false)
+      setCurrentModulus(modulusAsNumber)
       return
     } catch (error) {
       setLoading(false)
@@ -288,9 +308,9 @@ export default function Home() {
                         type="text"
                         value={value}
                         onChange={(e) =>
-                          handleChangeEvaluationPoint(e, setEvaluationPoint)
+                          handleChangeEvaluationPoint(e)
                         }
-                        className="border border-blue-400 text-center w-8 px-1 rounded-md"
+                        className="border border-blue-400 text-center w-8 px-1 rounded-md mr-1 ml-1 resize-x"
                       >
                       </input>
                     )}
@@ -298,7 +318,7 @@ export default function Home() {
                         <Latex>$)$</Latex>
                       </span>
                       <span>
-                        <Latex>$= {evaluation}$</Latex>
+                        <Latex>$=$ {evaluation}</Latex>
                       </span>
                     </div>
                     {evaluationPointError && (

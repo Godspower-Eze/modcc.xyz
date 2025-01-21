@@ -17,7 +17,7 @@ import {
   MODULUS_PLACEHOLDER,
   LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   COMMA_SEPARATED_NUMBERS_REGEX,
-  NUMBER_REGEX,
+  UNIVARIATE_INTERPOLATION_NUMBER_REGEX,
   UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION,
   UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION_POINT,
 } from '../constants'
@@ -109,7 +109,7 @@ export default function Home() {
     setModulusError('')
     setModulusIsValid(true)
     setFormValid(xValuesIsValid && yValuesIsValid && true)
-    if (!NUMBER_REGEX.test(e.target.value)) {
+    if (!UNIVARIATE_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
       setModulusError('invalid format. enter a number')
       setModulusIsValid(false)
       setFormValid(false)
@@ -182,7 +182,7 @@ export default function Home() {
     setter(e.target.value)
     setEvaluationPointError('')
     setEvaluationPointIsValid(true)
-    if (!NUMBER_REGEX.test(e.target.value)) {
+    if (!UNIVARIATE_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
       setEvaluationPointError('invalid format. enter a number')
       setEvaluationPointIsValid(false)
       return
