@@ -44,10 +44,6 @@ export default function Home() {
     parseInt(MODULUS_PLACEHOLDER),
   )
 
-  const [xValuesAndYValuesIsValid, setXValuesAndYValuesIsValid] = useState<
-    boolean
-  >(true)
-
   const [answer, setAnswer] = useState<string>(
     LAGRANGE_INTERPOLATION_DEFAULT_ANSWER,
   )
@@ -64,6 +60,7 @@ export default function Home() {
     UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
   )
   const [formValid, setFormValid] = useState<boolean>(true)
+  const [formError, setFormError] = useState<string>('')
 
   const [mainLoading, setLoading] = useState<boolean>(false)
 
@@ -123,6 +120,40 @@ export default function Home() {
     }
   }
 
+  const handleChangeEvaluationPoint = (
+    e: ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
+    setter(e.target.value)
+    setEvaluationPointError('')
+    setEvaluationPointIsValid(true)
+    if (!UNIVARIATE_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
+      setEvaluationPointError('invalid format. enter a number')
+      setEvaluationPointIsValid(false)
+      return
+    }
+  }
+
+  const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setEvaluationLoading(true)
+
+    const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
+    try {
+      const response = await axoisInstance.post('/evaluate_univariate_poly/', {
+        evaluation_point: parseInt(evaluationPoint.trim()),
+        poly_string: answer.split('=')[1].split('$')[0],
+        field: currentModulus,
+      })
+      setEvaluation(response.data.evaluation)
+      setEvaluationLoading(false)
+      return
+    } catch (error) {
+      setEvaluationLoading(false)
+      console.log(error)
+    }
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
@@ -136,9 +167,9 @@ export default function Home() {
       setLoading(false)
       return
     }
-    let xValuesAsList = commaSeparatedToList(xValues)
-    let yValuesAsList = commaSeparatedToList(yValues)
-    let modulusAsNumber = parseInt(modulus.trim())
+    const xValuesAsList = commaSeparatedToList(xValues)
+    const yValuesAsList = commaSeparatedToList(yValues)
+    const modulusAsNumber = parseInt(modulus.trim())
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
@@ -175,49 +206,25 @@ export default function Home() {
     }
   }
 
-  const handleChangeEvaluationPoint = (
-    e: ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>,
-  ) => {
-    setter(e.target.value)
-    setEvaluationPointError('')
-    setEvaluationPointIsValid(true)
-    if (!UNIVARIATE_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
-      setEvaluationPointError('invalid format. enter a number')
-      setEvaluationPointIsValid(false)
-      return
-    }
-  }
-
-  const handleSubmitEvaluation = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setEvaluationLoading(true)
-
-    const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
-    try {
-      const response = await axoisInstance.post('/evaluate_univariate_poly/', {
-        evaluation_point: parseInt(evaluationPoint.trim()),
-        poly_string: answer.split('=')[1].split('$')[0],
-        field: currentModulus,
-      })
-      setEvaluation(response.data.evaluation)
-      setEvaluationLoading(false)
-      return
-    } catch (error) {
-      setEvaluationLoading(false)
-      console.log(error)
-    }
-  }
+ 
 
   useEffect(() => {
     if (xValuesIsValid && yValuesIsValid) {
+      setFormError("")
+      setFormValid(xValuesIsValid && yValuesIsValid && modulusIsValid && true)
+      let xValuesAsList = commaSeparatedToList(xValues)
+      let yValuesAsList = commaSeparatedToList(yValues)
+      if (xValuesAsList.length != yValuesAsList.length) {
+        setFormError("length of evaluation points and evaluations should be equal")
+        setFormValid(false)
+      }
     }
-  }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
+  }, [xValuesIsValid, yValuesIsValid, xValues, yValues, modulusIsValid])
 
   return (
     <div className=" bg-gray-100 flex flex-col min-h-screen text-xs">
       <Navbar />
-      <main className="flex-grow flex ">
+      <main className="flex-grow flex lowercase">
         <section className="w-full md:w-1/4 p-4"></section>
         <section className="w-full md:w-1/2 p-4">
           <div className="container mx-auto">
@@ -230,7 +237,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  Y VALUES
+                  Evaluations
                 </label>
                 <input
                   required
@@ -244,7 +251,7 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {yValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
+                  <p className="text-red-500 text-xm mt-2">{yValuesError}</p>
                 )}
               </div>
               <div className="mb-4">
@@ -252,7 +259,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  X VALUES
+                  Evaluation Points
                 </label>
                 <input
                   required
@@ -266,15 +273,18 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {xValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{xValuesError}</p>
+                  <p className="text-red-500 text-xm mt-2">{xValuesError}</p>
                 )}
               </div>
+                {formError && (
+                  <p className="text-red-500 text-xm mt-1 mb-1">{formError}</p>
+                )}
               <div className="mb-4">
                 <label
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  PRIME MODULUS
+                  Prime Modulus
                 </label>
                 <input
                   type="text"
@@ -287,13 +297,13 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {modulusError && (
-                  <p className="text-red-500 text-sm mt-2">{modulusError}</p>
+                  <p className="text-red-500 text-xm mt-2">{modulusError}</p>
                 )}
               </div>
               <div>
                 <button
                   disabled={
-                    !formValid || !xValuesAndYValuesIsValid || mainLoading
+                    !formValid || mainLoading
                   }
                   type="submit"
                   className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white items-center ${

@@ -99,7 +99,7 @@ export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS = [
   "3",
 ];
 export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINT = "3";
-export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION = "10";
+export const MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION = "$10$";
 export const MULTILINEAR_INTERPOLATION_DEFAULT_ANSWER =
   "$f(x_1,x_2,x_3) = 16x_{1} +2x_{2} +3x_{1}x_{2} +6x_{3} +9x_{1}x_{3} +6x_{2}x_{3} +6x_{1}x_{2}x_{3} + 3$";
 export const MULTILINEAR_LAGRANGE_GENERAL_FORM =
@@ -246,4 +246,6 @@ export const MULTILINEAR_LAGRANGE_DEFAULT_STEPS: MultilinearLagrangeInterpolatio
 export const X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE = "(0 1), (2 3), (4 5)";
 export const Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE = "3, 2, 5";
 export const MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER =
-  "$\\tilde f(x_1,x_2) = 15x_1^5x_2^5 + 4x_1^5x_2^4 + 7x_1^5x_2^3 + 1x_1^5x_2^2 + 4x_1^5x_2 + 6x_1^4x_2^5 + 11x_1^4x_2^4 + 9x_1^4x_2^2 + 2x_1^4x_2 + 9x_1^2x_2^5 + 10x_1^2x_2^4 + 10x_1^2x_2^3 + 8x_1^2x_2^2 + 9x_1^2x_2 + 4x_1x_2^5 + 12x_1x_2^4 + 12x_1x_2^3 + 13x_1x_2^2 + 4x_1x_2 + 15x_2^5 + 11x_2^4 + 11x_2^3 + 2x_2^2 + 15x_2 + 10x_1^3x_2^5 + 6x_1^3x_2^4 + 16x_1^3x_2^3 + 15x_1^3x_2^2 + 4x_1^3x_2 + 9x_1^2x_2^5 + 1x_1^2x_2^4 + 1x_1^2x_2^3 + 8x_1^2x_2^2 + 15x_1^2x_2 + 13x_1x_2^4 + 11x_1x_2^3 + 12x_1x_2^2 + 15x_1x_2$";
+  "$f(x_1,x_2) = 15x_{2} + 2x_{1}x_{2} + 2x_{2}^{2} + 8x_{1}x_{2}^{2} + 7x_{1}^{2}x_{2} + 11x_{2}^{3} + 6x_{1}x_{2}^{3} + 16x_{1}^{2}x_{2}^{2} + 4x_{1}^{3}x_{2} + 11x_{2}^{4} + 8x_{1}x_{2}^{4} + 11x_{1}^{2}x_{2}^{3} + 15x_{1}^{3}x_{2}^{2} + 2x_{1}^{4}x_{2} + 15x_{2}^{5} + 4x_{1}x_{2}^{5} + 11x_{1}^{2}x_{2}^{4} + 16x_{1}^{3}x_{2}^{3} + 9x_{1}^{4}x_{2}^{2} + 4x_{1}^{5}x_{2} + x_{1}^{2}x_{2}^{5} + 6x_{1}^{3}x_{2}^{4} + x_{1}^{5}x_{2}^{2} + 10x_{1}^{3}x_{2}^{5} + 11x_{1}^{4}x_{2}^{4} + 7x_{1}^{5}x_{2}^{3} + 6x_{1}^{4}x_{2}^{5} + 4x_{1}^{5}x_{2}^{4} + 15x_{1}^{5}x_{2}^{5}$";
+export const MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINTS = ["1", "2"];
+export const MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINT = "$0$";

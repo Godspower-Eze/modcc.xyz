@@ -14,11 +14,6 @@ import {
   MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
   MULTILINEAR_INTERPOLATION_NUMBER_REGEX
 } from '../constants'
-import {
-  getMultilinearLagrangeInterpolationAnswer,
-  getMultilinearLagrangeInterpolationStepsAndEvaluations,
-  MultilinearLagrangeInterpolationStepsAndEvaluations,
-} from '../utils/latex'
 import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 const yValuesPlaceHolder = '3, 2, 5, 7, 9'
@@ -72,6 +67,27 @@ export default function Home() {
     }
   }
 
+  const handleChangeEvaluationPoints = (
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const key = parseInt(e.target.dataset.key!)
+    const value = e.target.value
+    let evalPoints = [...evaluationPoints]
+    evalPoints[key - 1] = value
+    setEvaluationPoints(evalPoints)
+    setEvaluationPointError('')
+    setEvaluationPointIsValid(true)
+    if (!MULTILINEAR_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
+      setEvaluationPointError('invalid format. enter a number')
+      setEvaluationPointIsValid(false)
+      return
+    }
+    if (evalPoints.every((value) => value.trim() == "")) {
+      setEvaluationPointIsValid(false)
+      return
+    }
+  }
+
   const handleModulusChange = (
     e: ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>,
@@ -90,27 +106,6 @@ export default function Home() {
       setModulusError('invalid number. enter a prime number')
       setModulusIsValid(false)
       setFormValid(false)
-      return
-    }
-  }
-
-  const handleChangeEvaluationPoint = (
-    e: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const key = parseInt(e.target.dataset.key!)
-    const value = e.target.value
-    let evalPoints = [...evaluationPoints]
-    evalPoints[key - 1] = value
-    setEvaluationPoints(evalPoints)
-    setEvaluationPointError('')
-    setEvaluationPointIsValid(true)
-    if (!MULTILINEAR_INTERPOLATION_NUMBER_REGEX.test(e.target.value)) {
-      setEvaluationPointError('invalid format. enter a number')
-      setEvaluationPointIsValid(false)
-      return
-    }
-    if (evalPoints.every((value) => value.trim() == "")) {
-      setEvaluationPointIsValid(false)
       return
     }
   }
@@ -166,15 +161,24 @@ export default function Home() {
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post(
+      const polyResponse = await axoisInstance.post(
         '/multilinear_interpolation_over_boolean_hypercube/',
         {
           y_values: yValuesAsList,
           field: modulusAsNumber,
         },
       )
-      const answer = response.data.poly;
-      setAnswer(answer)
+      const answer = polyResponse.data.poly
+      const numOfVars = polyResponse.data.properties.num_of_vars
+      const evalPoints =  Array.from({ length: numOfVars }, (_, i) => [(i + 1), i + 1])
+      const evalResponse = await axoisInstance.post('/full_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: modulusAsNumber,
+      })
+      setAnswer(polyResponse.data.poly)
+      setEvaluation(evalResponse.data.evaluation)
+      setEvaluationPoints(Array.from({ length: numOfVars }, (_, i) => `${i + 1}`))
       setLoading(false)
       setCurrentModulus(modulusAsNumber)
       return
@@ -192,7 +196,7 @@ export default function Home() {
   return (
     <div className=" bg-gray-100 flex flex-col min-h-screen text-xs">
       <Navbar />
-      <main className="flex-grow flex ">
+      <main className="flex-grow flex lowercase">
         <section className="w-full md:w-1/4 p-4"></section>
         <section className="w-full md:w-1/2 p-4">
           <div className="container mx-auto">
@@ -205,7 +209,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  Y VALUES
+                  Evaluations
                 </label>
                 <input
                   required
@@ -227,7 +231,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  PRIME MODULUS
+                  Prime Modulus
                 </label>
                 <input
                   type="text"
@@ -293,27 +297,28 @@ export default function Home() {
                 </div>
               </div>
               <p className="font-bold underline text-sm mb-1 mt-2">
-                Evaluation
+                Evaluations
               </p>
               <div>
                   <form onSubmit={(e) => handleSubmitEvaluation(e)}>
-                    <div className="pt-2 pb-2">
+                  <div className="overflow-x-auto">
+                    <div className="pt-2 pb-2 whitespace-nowrap">
                       <span>
                         <Latex>$f($</Latex>
-                    </span>
-                    {evaluationPoints.map((value, index) =>
+                      </span>
+                      {evaluationPoints.map((value, index) =>
                       <input
                         key={index + 1}
                         data-key = {index + 1}
                         type="text"
                         value={value}
                         onChange={(e) =>
-                          handleChangeEvaluationPoint(e)
+                          handleChangeEvaluationPoints(e)
                         }
                         className="border border-blue-400 text-center w-8 px-1 rounded-md mr-1 ml-1 resize-x"
                       >
                       </input>
-                    )}
+                        )}
                       <span>
                         <Latex>$)$</Latex>
                       </span>
@@ -321,6 +326,7 @@ export default function Home() {
                         <Latex>$=$ {evaluation}</Latex>
                       </span>
                     </div>
+                  </div>
                     {evaluationPointError && (
                       <p className="text-red-500 text-xs mt-2">
                         {evaluationPointError}

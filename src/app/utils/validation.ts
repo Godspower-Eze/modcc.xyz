@@ -11,9 +11,15 @@ export const commaSeparatedToListForEvaluationPair = (input: string) => {
   let evaluations_pairs: Array<Array<number>> = [];
   splitted_value.forEach((element) => {
     let evaluation_pair: Array<number> = [];
-    let elements = element.trim().replace("(", "").replace(")", "").split(" ");
+    let elements = element
+      .trim()
+      .replace("(", "")
+      .replace(")", "")
+      .split(" ")
+      .filter((value) => value != "")
+      .map((value) => parseInt(value));
     elements.forEach((element) => {
-      evaluation_pair.push(parseInt(element));
+      evaluation_pair.push(element);
     });
     evaluations_pairs.push(evaluation_pair);
   });
@@ -52,4 +58,41 @@ export const listsToString = (x: Array<number>, y: Array<number>): string => {
   });
   res += "]";
   return res;
+};
+
+export const validateTuples = (input: string): boolean => {
+  // Step 1: Validate overall structure using regex
+  const tupleRegex = /^\(\d+(?:\s+\d+)*\)(?:,\s*\(\d+(?:\s+\d+)*\))*$/;
+  if (!tupleRegex.test(input)) {
+    return false; // Invalid format
+  }
+
+  // Step 2: Extract tuples and validate sizes
+  const tuples = input.match(/\(([^)]+)\)/g); // Match all tuples
+  if (!tuples) {
+    return false; // No tuples found
+  }
+
+  // Normalize tuples to ensure consistency and uniqueness
+  const normalizedTuples = tuples.map(
+    (tuple) =>
+      tuple
+        .replace(/[()]/g, "") // Remove parentheses
+        .trim()
+        .split(/\s+/) // Split by spaces only
+        .map(Number) // Convert elements to numbers
+        .join(" ") // Join elements back with a single space
+  );
+  console.log(normalizedTuples);
+
+  // Check consistency of tuple sizes
+  const tupleSizes = normalizedTuples.map((tuple) => tuple.split(" ").length);
+  if (!tupleSizes.every((size) => size === tupleSizes[0])) {
+    return false; // Sizes are not consistent
+  }
+
+  // Ensure all tuples are unique
+  const uniqueTuples = new Set(normalizedTuples);
+  console.log(uniqueTuples);
+  return uniqueTuples.size === normalizedTuples.length;
 };

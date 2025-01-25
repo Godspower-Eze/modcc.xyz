@@ -9,28 +9,24 @@ import { Navbar } from '../components/navbar'
 import { Footer } from '../components/footer'
 import {
   BACKEND_URL,
-  UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
   MODULUS_PLACEHOLDER,
   X_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   Y_VALUES_PLACEHOLDER_FOR_MULTIVARIATE,
   MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
-  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
-  MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION,
+  MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINTS,
+  MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINT,
   MULTILINEAR_INTERPOLATION_NUMBER_REGEX
 } from '../constants'
-import {
-  arrayToLatexPolyforMultivariate,
-  LagrangeInterpolationSteps,
-} from '../utils/latex'
 import {
   commaSeparatedToList,
   commaSeparatedToListForEvaluationPair,
   getNumberOfVars,
   isPrime,
+  validateTuples
 } from '../utils/validation'
 
 const commaSeperatedNumbersRegex = /^\s*(,\s*)?(0|[1-9]\d*)\s*(,\s*(0|[1-9]\d*)\s*)*(,\s*)?$/
-const evaluationsPairRegex = /^\(\d+( \d+)+\)(?:,\s*\(\d+( \d+)+\))*$/
+const evaluationsPairRegex = /^\((\d+(?:\s\d+)*)\)(,\(\1\))*$/
 const numberRegex = /^\s*[1-9]\d*\s*$/
 
 export default function Home() {
@@ -58,15 +54,17 @@ export default function Home() {
     MULTIVARIATE_INTERPOLATION_DEFAULT_ANSWER,
   )
   const [formValid, setFormValid] = useState<boolean>(true)
+  const [formError, setFormError] = useState<string>('')
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  const [evaluationPoints, setEvaluationPoints] = useState<Array<string>>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
+  const [evaluationPoints, setEvaluationPoints] = useState<Array<string>>(MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINTS)
   const [evaluationPointError, setEvaluationPointError] = useState<string>('')
   const [evaluationPointIsValid, setEvaluationPointIsValid] = useState<boolean>(
       true,
-    )
-  const [evaluation, setEvaluation] = useState<string>(MULTILINEAR_INTERPOLATION_DEFAULT_EVALUATION)
+  )
+  const [evaluationPointsAndYValuesIsValid, setEvaluationPointsAndYValuesIsValid] = useState<boolean>(true)
+  const [evaluation, setEvaluation] = useState<string>(MULTIVARIATE_INTERPOLATION_DEFAULT_EVALUATION_POINT)
 
   const [evaluationLoading, setEvaluationLoading] = useState<boolean>(false)
   const [currentModulus, setCurrentModulus] = useState<number>(
@@ -97,8 +95,8 @@ export default function Home() {
     setXValuesError('')
     setXValuesIsValid(true)
     setFormValid(yValuesIsValid && modulusIsValid && true)
-    if (!evaluationsPairRegex.test(e.target.value)) {
-      setXValuesError('invalid format. use format, e.g: (1 2), (3 4), (5 6)')
+    if (!validateTuples(e.target.value)) {
+      setXValuesError('invalid format. use format, e.g: (1 2), (3 4), (5 6) and unique tuples')
       setXValuesIsValid(false)
       setFormValid(false)
       return
@@ -169,6 +167,7 @@ export default function Home() {
         const evaluation = response.data.evaluation;
         setEvaluation(evaluation)
       } else {
+        console.log(evalPoints, answer)
         const response = await axoisInstance.post('/partial_evaluation/', {
           evaluation_points: evalPoints,
           poly_string: answer.split("$")[1],
@@ -181,7 +180,6 @@ export default function Home() {
       return
     } catch (error) {
       setEvaluationLoading(false)
-      console.log(error)
     }
   }
 
@@ -197,44 +195,59 @@ export default function Home() {
       setLoading(false)
       return
     }
-    let evaluation_points = commaSeparatedToListForEvaluationPair(xValues)
-    let numOfVars = getNumberOfVars(evaluation_points)
+    let evaluationPoints = commaSeparatedToListForEvaluationPair(xValues)
+    let numOfVars = getNumberOfVars(evaluationPoints)
     let yValuesAsList = commaSeparatedToList(yValues)
     let modulusAsNumber = parseInt(modulus.trim())
 
     const axoisInstance = axios.create({ baseURL: `${BACKEND_URL}` })
 
     try {
-      const response = await axoisInstance.post(
+      const polyResponse = await axoisInstance.post(
         '/multivariate_interpolation_over_finite_field/',
         {
           num_of_vars: numOfVars,
-          evaluation_points,
+          evaluation_points: evaluationPoints,
           y_values: yValuesAsList,
           field: modulusAsNumber,
         },
       )
-      let terms = response.data.terms
-      let answer = arrayToLatexPolyforMultivariate(terms, numOfVars)
-      // let steps = getLagrangeInterpolationSteps(response.data.steps)
-      // setSteps(steps)
-      setAnswer(`${answer}`)
+      const answer = polyResponse.data.poly
+      const evalPoints =  Array.from({ length: numOfVars }, (_, i) => [(i + 1), i + 1])
+      const evalResponse = await axoisInstance.post('/full_evaluation/', {
+          evaluation_points: evalPoints,
+          poly_string: answer.split("$")[1],
+          field: modulusAsNumber,
+      })
+      setAnswer(polyResponse.data.poly)
+      setEvaluation(evalResponse.data.evaluation)
+      setEvaluationPoints(Array.from({ length: numOfVars }, (_, i) => `${i + 1}`))
       setLoading(false)
+      setCurrentModulus(modulusAsNumber)
       return
     } catch (error) {
-      console.log(error)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
     if (xValuesIsValid && yValuesIsValid) {
+      setFormError("")
+      setFormValid(yValuesIsValid && xValuesIsValid && modulusIsValid && true)
+      let evaluationPoints = commaSeparatedToListForEvaluationPair(xValues);
+      let yValuesAsList = commaSeparatedToList(yValues)
+      if (evaluationPoints.length !== yValuesAsList.length) {
+        setFormError("length of evaluation points and evaluations should be equal")
+        setFormValid(false)
+        return
+      }
     }
-  }, [xValues, yValues, xValuesIsValid, yValuesIsValid])
+  }, [xValues, yValues, xValuesIsValid, yValuesIsValid, modulusIsValid])
 
   return (
     <div className=" bg-gray-100 flex flex-col min-h-screen text-xs">
       <Navbar />
-      <main className="flex-grow flex ">
+      <main className="flex-grow flex lowercase">
         <section className="w-full md:w-1/4 p-4"></section>
         <section className="w-full md:w-1/2 p-4">
           <div className="container mx-auto">
@@ -247,7 +260,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  X VALUES
+                  Evaluation Points
                 </label>
                 <input
                   required
@@ -261,7 +274,7 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {xValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{xValuesError}</p>
+                  <p className="text-red-500 text-xm mt-2">{xValuesError}</p>
                 )}
               </div>
               <div className="mb-4">
@@ -269,7 +282,7 @@ export default function Home() {
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  Y VALUES
+                  Evaluations
                 </label>
                 <input
                   required
@@ -283,15 +296,18 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {yValuesError && (
-                  <p className="text-red-500 text-sm mt-2">{yValuesError}</p>
+                  <p className="text-red-500 text-xm mt-2">{yValuesError}</p>
                 )}
               </div>
+                {formError && (
+                  <p className="text-red-500 text-xm mt-1 mb-1">{formError}</p>
+                )}
               <div className="mb-4">
                 <label
                   htmlFor="name"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  PRIME MODULUS
+                  Prime Modulus
                 </label>
                 <input
                   type="text"
@@ -304,7 +320,7 @@ export default function Home() {
                   } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 />
                 {modulusError && (
-                  <p className="text-red-500 text-sm mt-2">{modulusError}</p>
+                  <p className="text-red-500 text-xm mt-2">{modulusError}</p>
                 )}
               </div>
               <div>
@@ -361,30 +377,32 @@ export default function Home() {
               </p>
                   <div>
                     <form onSubmit={(e) => handleSubmitEvaluation(e)}>
-                      <div className="pt-2 pb-2">
-                        <span>
-                          <Latex>$f($</Latex>
-                      </span>
-                      {evaluationPoints.map((value, index) =>
-                        <input
-                          key={index + 1}
-                          data-key = {index + 1}
-                          type="text"
-                          value={value}
-                          onChange={(e) =>
-                            handleChangeEvaluationPoint(e)
-                          }
-                          className="border border-blue-400 text-center w-8 px-1 rounded-md mr-1 ml-1 resize-x"
-                        >
-                        </input>
-                      )}
-                        <span>
-                          <Latex>$)$</Latex>
-                        </span>
-                        <span>
-                          <Latex>$=$ {evaluation}</Latex>
-                        </span>
+                    <div className='overflow-x-auto'>
+                      <div className="pt-2 pb-2 whitespace-nowrap">
+                          <span>
+                            <Latex>$f($</Latex>
+                          </span>
+                          {evaluationPoints.map((value, index) =>
+                          <input
+                            key={index + 1}
+                            data-key = {index + 1}
+                            type="text"
+                            value={value}
+                            onChange={(e) =>
+                              handleChangeEvaluationPoint(e)
+                            }
+                            className="border border-blue-400 text-center w-8 px-1 rounded-md mr-1 ml-1 resize-x"
+                          >
+                          </input>
+                          )}
+                          <span>
+                            <Latex>$)$</Latex>
+                          </span>
+                          <span>
+                            <Latex>$=$ {evaluation}</Latex>
+                          </span>
                       </div>
+                    </div>
                       {evaluationPointError && (
                         <p className="text-red-500 text-xs mt-2">
                           {evaluationPointError}
