@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next';
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={dm_sans.className}>{children}</body>
+      <Analytics />
     </html>
   )
 }
