@@ -183,19 +183,16 @@ export default function Home() {
         },
       )
       let answer = arrayToLatexPoly(interpolationResponse.data.coefficients)
-      let steps = getLagrangeInterpolationSteps(
-        interpolationResponse.data.steps,
-      )
       const evaluationResponse = await axoisInstance.post(
         '/evaluate_univariate_poly/',
         {
-          evaluation_point: 3,
+          evaluation_point: 0,
           poly_string: answer,
           field: modulusAsNumber,
         },
       )
+      setEvaluationPoint("0")
       setEvaluation(evaluationResponse.data.evaluation)
-      setSteps(steps)
       setAnswer(`$f(x) = ${answer}$`)
       setCurrentModulus(modulusAsNumber)
       setLoading(false)

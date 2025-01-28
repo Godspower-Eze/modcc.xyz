@@ -239,7 +239,6 @@ export default function Home() {
       if (evaluationPoints.length !== yValuesAsList.length) {
         setFormError("length of evaluation points and evaluations should be equal")
         setFormValid(false)
-        return
       }
     }
   }, [xValues, yValues, xValuesIsValid, yValuesIsValid, modulusIsValid])
