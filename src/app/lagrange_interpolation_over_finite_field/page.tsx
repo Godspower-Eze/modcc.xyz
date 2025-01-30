@@ -1,7 +1,7 @@
 'use client'
 
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next'
 
@@ -9,9 +9,6 @@ import { Navbar } from '../components/navbar'
 import { Footer } from '../components/footer'
 import {
   BACKEND_URL,
-  UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  UNIVARIATE_LAGRANGE_GENERAL_FORM,
-  LAGRANGE_BASIS_FORMULA,
   Y_VALUES_PLACEHOLDER,
   X_VALUES_PLACEHOLDER,
   MODULUS_PLACEHOLDER,
@@ -21,11 +18,6 @@ import {
   UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION,
   UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION_POINT,
 } from '../constants'
-import {
-  arrayToLatexPoly,
-  getLagrangeInterpolationSteps,
-  LagrangeInterpolationSteps,
-} from '../utils/latex'
 import { commaSeparatedToList, isPrime } from '../utils/validation'
 
 export default function Home() {
@@ -56,11 +48,10 @@ export default function Home() {
   )
   const [evaluation, setEvaluation] = useState<string>(UNIVARIATE_LAGRANGE_INTERPOLATION_DEFAULT_EVALUATION)
 
-  const [steps, setSteps] = useState<LagrangeInterpolationSteps>(
-    UNIVARIATE_LAGRANGE_DEFAULT_STEPS,
-  )
   const [formValid, setFormValid] = useState<boolean>(true)
   const [formError, setFormError] = useState<string>('')
+
+  const [badResponse, setBadResponse] = useState<string>('')
 
   const [mainLoading, setLoading] = useState<boolean>(false)
 
@@ -70,6 +61,7 @@ export default function Home() {
     e: ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
+    setBadResponse("")
     setter(e.target.value)
     setYValuesError('')
     setYValuesIsValid(true)
@@ -86,6 +78,7 @@ export default function Home() {
     e: ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
+    setBadResponse("")
     setter(e.target.value)
     setXValuesError('')
     setXValuesIsValid(true)
@@ -96,12 +89,21 @@ export default function Home() {
       setFormValid(false)
       return
     }
+    const xValuesAsList = commaSeparatedToList(e.target.value)
+    const xValuesAsSet = new Set(xValuesAsList)
+    if (xValuesAsList.length != xValuesAsSet.size) {
+      setXValuesError('evaluation points should be unique')
+      setXValuesIsValid(false)
+      setFormValid(false)
+      return
+    }
   }
 
   const handleModulusChange = (
     e: ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>,
   ) => {
+    setBadResponse("")
     setter(e.target.value)
     setModulusError('')
     setModulusIsValid(true)
@@ -142,7 +144,7 @@ export default function Home() {
     try {
       const response = await axoisInstance.post('/evaluate_univariate_poly/', {
         evaluation_point: parseInt(evaluationPoint.trim()),
-        poly_string: answer.split('=')[1].split('$')[0],
+        poly_string: answer,
         field: currentModulus,
       })
       setEvaluation(response.data.evaluation)
@@ -163,7 +165,6 @@ export default function Home() {
       modulus == MODULUS_PLACEHOLDER
     ) {
       setAnswer(LAGRANGE_INTERPOLATION_DEFAULT_ANSWER)
-      setSteps(UNIVARIATE_LAGRANGE_DEFAULT_STEPS)
       setLoading(false)
       return
     }
@@ -182,7 +183,7 @@ export default function Home() {
           field: modulusAsNumber,
         },
       )
-      let answer = arrayToLatexPoly(interpolationResponse.data.coefficients)
+      const answer = interpolationResponse.data.poly
       const evaluationResponse = await axoisInstance.post(
         '/evaluate_univariate_poly/',
         {
@@ -191,20 +192,18 @@ export default function Home() {
           field: modulusAsNumber,
         },
       )
+      setAnswer(answer)
       setEvaluationPoint("0")
       setEvaluation(evaluationResponse.data.evaluation)
-      setAnswer(`$f(x) = ${answer}$`)
       setCurrentModulus(modulusAsNumber)
       setLoading(false)
       return
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false)
-      console.log(error)
+      setBadResponse(error.response.data.detail)
     }
   }
-
  
-
   useEffect(() => {
     if (xValuesIsValid && yValuesIsValid) {
       setFormError("")
@@ -340,6 +339,9 @@ export default function Home() {
                   )}
                 </button>
               </div>
+                {badResponse && (
+                  <p className="text-red-500 text-sm mt-2">{badResponse}</p>
+                )}
             </form>
             <div className="mb-3">
               <p className="font-bold underline text-base mb-1">Answer</p>
